@@ -1,5 +1,11 @@
 package util.assignments;
 
-public abstract class Assignment {
-    public abstract boolean isConditional();
+import util.expressions.Expression;
+
+public class Assignment {
+    public Expression expression;
+    
+    public Assignment(Expression expression) {
+        this.expression = expression;
+    }
 }
