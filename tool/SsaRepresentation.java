@@ -26,5 +26,12 @@ public class SsaRepresentation {
         assignments.add(assignment);
     }
     
+    public List<Assignment> getAssignments(){
+        return assignments;
+    }
+    
+    public List<Assertion> getAssertions(){
+        return assertions;
+    }
     
 }
