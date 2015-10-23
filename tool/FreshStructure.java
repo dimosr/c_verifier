@@ -4,19 +4,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FreshStructure {
-    private Map<String, Integer> freshSet;
+    private Map<String, Integer> freshMap;
     
     public FreshStructure() {
-        freshSet = new HashMap<String, Integer>();
+        freshMap = new HashMap<String, Integer>();
     }
     
     public int fresh(String variableName) {
-        int nextIndex = freshSet.get(variableName);
-        freshSet.put(variableName, nextIndex+1);
+        int nextIndex = freshMap.get(variableName);
+        freshMap.put(variableName, nextIndex+1);
         return nextIndex;
     }
     
     public void addNewVar(String variableName) {
-        freshSet.put(variableName, 0);
+        freshMap.put(variableName, 0);
+    }
+    
+    public Map<String, Integer> getAllVariablesMappings(){
+        return freshMap;
     }
 }
