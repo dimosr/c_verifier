@@ -24,9 +24,7 @@ public class VCGenerator {
                 FreshStructure fresh = verifierVisitor.getFresh();
                 SsaRepresentation ssa = verifierVisitor.getSsa();
             
-                try (PrintStream out = new PrintStream(new FileOutputStream("ssa_format.txt"))) {
-                    out.print(ssa.getText(fresh));
-                }
+                System.out.print(ssa.getText(fresh));
             
 		StringBuilder result = new StringBuilder("(set-logic QF_BV)\n");
 		result.append("(set-option :produce-models true)\n");

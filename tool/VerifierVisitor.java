@@ -5,7 +5,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser;
@@ -110,10 +113,17 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 fresh.addNewVar(formalParamName);
                 mapping.put(formalParamName, 0);
             }
-            Void result = super.visitProcedureDecl(ctx);
+            
+            for(SimpleCParser.StmtContext statementCtx : ctx.stmts) {
+                visitStmt(statementCtx);
+            }
+            
+            //TODO : visit return stmt
+            
+            //Void result = super.visitProcedureDecl(ctx);
             popLocalsStack();
             parameters = null;
-            return result;
+            return null;
 	}
         
         @Override
@@ -394,10 +404,15 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         @Override
         public Void visitUnaryExpr(UnaryExprContext ctx) {
-            for(Token op : ctx.ops){
-                expression.addElement(" " + op.getText() + " ");
+            if(ctx.single != null) {
+                super.visitAtomExpr(ctx.single);
             }
-            visitAtomExpr(ctx.arg);
+            else {
+                for(Token op : ctx.ops){
+                    expression.addElement(" " + op.getText() + " ");
+                }
+                super.visitAtomExpr(ctx.arg);
+            }
             return null;
         }
         
@@ -405,8 +420,9 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         @Override
         public Void visitNumberExpr(NumberExprContext ctx) {
+            String t = ctx.number.getText();
             expression.addElement(ctx.number.getText());
-            return visitNumberExpr(ctx);
+            return null;
         }
         
         @Override
@@ -414,7 +430,7 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             String variableName = ctx.var.ident.name.getText();
             Integer variableIndex = mapping.get(variableName);
             expression.addElement(variableName + variableIndex);
-            return visitVarrefExpr(ctx);
+            return null;
         }
         
         @Override
