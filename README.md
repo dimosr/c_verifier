@@ -46,3 +46,20 @@ LoopInvariant := Invariant | CandidateInvariant
 Invariant := 'invariant' Expr
 CandidateInvariant := 'candidateInvariant' Expr
 ```
+
+### Compilation
+
+- To compile the whole program :
+```sh
+javac -cp antlr-4.5.1-complete.jar */*.java
+```
+
+- To execute the program with test file
+```sh
+./srtool tests/correct/divzero.c
+```
+
+- To just compile (auto-generate through ANTLR grammar) the Visitor :
+```sh
+java -cp ../antlr-4.5.1-complete.jar org.antlr.v4.Tool -visitor -package parser SimpleC.g
+```
