@@ -129,7 +129,7 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         @Override
         public Void visitAssertStmt(AssertStmtContext ctx) {
             expression = new Expression();
-            visitExpr(ctx.condition);
+            super.visitExpr(ctx.condition);
             
             Assertion assertion = new Assertion(expression);
             ssa.addAssertion(assertion);
@@ -145,7 +145,7 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             Integer newValue = fresh.fresh(variableName);
             variableName = variableName + newValue;
             mapping.put(variableName, newValue);
-            visitExpr(ctx.rhs);
+            super.visitExpr(ctx.rhs);
             
             Assignment assignment = new Assignment(variableName, expression);
             ssa.addAssignment(assignment);
@@ -223,101 +223,182 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         */
         
         @Override
-        public Void visitTernExpr(TernExprContext cxt) {
-            visitLorExpr(cxt.args.get(0));
-            expression.addElement("?");
-            visitLorExpr(cxt.args.get(1));
-            expression.addElement(":");
-            visitLorExpr(cxt.args.get(2));
+        public Void visitTernExpr(TernExprContext ctx) {
+            if(ctx.single != null) {
+                visitLorExpr(ctx.single);
+            }
+            else{
+                visitLorExpr(ctx.args.get(0));
+                int index = 1;
+                while(index < ctx.args.size()) {
+                    expression.addElement(" ? ");
+                    visitLorExpr(ctx.args.get(index));
+                    index++;
+                    expression.addElement(" : ");
+                    visitLorExpr(ctx.args.get(index));
+                    index++;
+                }
+            }
             return null;
         }
         
         @Override
         public Void visitLorExpr(LorExprContext ctx) {
-            visitLandExpr(ctx.args.get(0));
-            expression.addElement("||");
-            visitLandExpr(ctx.args.get(1));
+            if(ctx.single != null) {
+                visitLandExpr(ctx.single);
+            }
+            else {
+                visitLandExpr(ctx.args.get(0)); 
+                for(int i = 1; i < ctx.args.size(); i++){
+                    expression.addElement(" || ");
+                    visitLandExpr(ctx.args.get(i));
+                }
+            }
             return null;
         }
         
         @Override
         public Void visitLandExpr(LandExprContext ctx) {
-            visitBorExpr(ctx.args.get(0));
-            expression.addElement("&&");
-            visitBorExpr(ctx.args.get(1));
+            if(ctx.single != null) {
+                visitBorExpr(ctx.single);
+            }
+            else {
+                visitBorExpr(ctx.args.get(0)); 
+                for(int i = 1; i < ctx.args.size(); i++){
+                    expression.addElement(" && ");
+                    visitBorExpr(ctx.args.get(i));
+                }
+            }
             return null;
         }
         
         @Override
         public Void visitBorExpr(BorExprContext ctx) {
-            visitBxorExpr(ctx.args.get(0));
-            expression.addElement("|");
-            visitBxorExpr(ctx.args.get(1));
+            if(ctx.single != null) {
+                visitBxorExpr(ctx.single);
+            }
+            else {
+                visitBxorExpr(ctx.args.get(0)); 
+                for(int i = 1; i < ctx.args.size(); i++){
+                    expression.addElement(" | ");
+                    visitBxorExpr(ctx.args.get(i));
+                }
+            }
             return null;
         }
         
         @Override
         public Void visitBxorExpr(BxorExprContext ctx) {
-            visitBandExpr(ctx.args.get(0));
-            expression.addElement("^");
-            visitBandExpr(ctx.args.get(0));
+            if(ctx.single != null) {
+                visitBandExpr(ctx.single);
+            }
+            else {
+                visitBandExpr(ctx.args.get(0)); 
+                for(int i = 1; i < ctx.args.size(); i++){
+                    expression.addElement(" ^ ");
+                    visitBandExpr(ctx.args.get(i));
+                }
+            }
             return null;
         }
         
         @Override
         public Void visitBandExpr(BandExprContext ctx) {
-            visitEqualityExpr(ctx.args.get(0));
-            expression.addElement("&");
-            visitEqualityExpr(ctx.args.get(1));
+            if(ctx.single != null) {
+                visitEqualityExpr(ctx.single);
+            }
+            else{
+                visitEqualityExpr(ctx.args.get(0));
+                for(int i = 1; i < ctx.args.size(); i++){
+                    expression.addElement(" & ");
+                    visitEqualityExpr(ctx.args.get(i));
+                }
+            }
             return null;
         }
         
         @Override
         public Void visitEqualityExpr(EqualityExprContext ctx) {
-            visitRelExpr(ctx.args.get(0));
-            expression.addElement(ctx.ops.get(0).getText());
-            visitRelExpr(ctx.args.get(1));
+            if(ctx.single != null) {
+                visitRelExpr(ctx.single);
+            }
+            else {
+                visitRelExpr(ctx.args.get(0));
+                for(int i = 1; i < ctx.args.size(); i++){
+                    expression.addElement(" " + ctx.ops.get(i-1).getText() + " ");
+                    visitRelExpr(ctx.args.get(i));
+                }
+            }
             return null;
         }
         
         @Override
         public Void visitRelExpr(RelExprContext ctx) {
-            visitShiftExpr(ctx.args.get(0));
-            expression.addElement(ctx.ops.get(0).getText());
-            visitShiftExpr(ctx.args.get(1));
+            if(ctx.single != null) {
+                visitShiftExpr(ctx.single);
+            }
+            else {
+                visitShiftExpr(ctx.args.get(0));
+                for(int i = 1; i < ctx.args.size(); i++){
+                    expression.addElement(" " + ctx.ops.get(i-1).getText() + " ");
+                    visitShiftExpr(ctx.args.get(i));
+                }
+            }
             return null;
         }
         
         @Override
         public Void visitShiftExpr(ShiftExprContext ctx) {
-            visitAddExpr(ctx.args.get(0));
-            expression.addElement(ctx.ops.get(0).getText());
-            visitAddExpr(ctx.args.get(1));
+            if(ctx.single != null) {
+                visitAddExpr(ctx.single);
+            }
+            else {
+                visitAddExpr(ctx.args.get(0));
+                for(int i = 1; i < ctx.args.size(); i++){
+                    expression.addElement(" " + ctx.ops.get(i-1).getText() + " ");
+                    visitAddExpr(ctx.args.get(i));
+                }
+            }
             return null;
         }
         
         @Override
         public Void visitAddExpr(AddExprContext ctx) {
-            visitMulExpr(ctx.args.get(0));
-            expression.addElement(ctx.ops.get(0).getText());
-            visitMulExpr(ctx.args.get(1));
+            if(ctx.single != null) {
+                visitMulExpr(ctx.single);
+            }
+            else {
+                visitMulExpr(ctx.args.get(0));
+                for(int i = 1; i < ctx.args.size(); i++){
+                    expression.addElement(" " + ctx.ops.get(i-1).getText() + " ");
+                    visitMulExpr(ctx.args.get(i));
+                }
+            }
             return null;
         }
         
         @Override
         public Void visitMulExpr(MulExprContext ctx) {
-            visitUnaryExpr(ctx.args.get(0));
-            expression.addElement(ctx.ops.get(0).getText());
-            visitUnaryExpr(ctx.args.get(1));
+            if(ctx.single != null) {
+                visitUnaryExpr(ctx.single);
+            }
+            else {
+                visitUnaryExpr(ctx.args.get(0));
+                for(int i = 1; i < ctx.args.size(); i++){
+                    expression.addElement(" " + ctx.ops.get(i-1).getText() + " ");
+                    visitUnaryExpr(ctx.args.get(i));
+                }
+            }
             return null;
         }
         
         @Override
         public Void visitUnaryExpr(UnaryExprContext ctx) {
             for(Token op : ctx.ops){
-                expression.addElement(op.getText());
+                expression.addElement(" " + op.getText() + " ");
             }
-            return visitAtomExpr(ctx.arg);
+            visitAtomExpr(ctx.arg);
+            return null;
         }
         
         /** No need to override atomExpr, since we just want to visit the children without no "side-effect" **/
@@ -330,15 +411,17 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         @Override
 	public Void visitVarrefExpr(VarrefExprContext ctx) {
-            expression.addElement(ctx.var.ident.name.getText());
+            String variableName = ctx.var.ident.name.getText();
+            Integer variableIndex = mapping.get(variableName);
+            expression.addElement(variableName + variableIndex);
             return visitVarrefExpr(ctx);
         }
         
         @Override
         public Void visitParenExpr(ParenExprContext ctx) {
-            expression.addElement("(");
+            expression.addElement(" ( ");
             visitParenExpr(ctx);
-            expression.addElement(")");
+            expression.addElement(" ) ");
             return null;
         }
         
