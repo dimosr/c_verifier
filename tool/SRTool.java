@@ -3,6 +3,7 @@ import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Set;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -39,10 +40,12 @@ public class SRTool {
 			System.exit(1);
 		}
 		
+                Set<String> globalVariables = tc.getGlobals();
 		assert ctx.procedures.size() == 1; // For Part 1 of the coursework, this can be assumed
-				
+		
+                VerifierVisitor verifierVisitor = new VerifierVisitor(globalVariables);
 		for(ProcedureDeclContext proc : ctx.procedures) {
-			VCGenerator vcgen = new VCGenerator(proc);
+			VCGenerator vcgen = new VCGenerator(proc, verifierVisitor);
 			String vc = vcgen.generateVC().toString();
 
 			ProcessExec process = new ProcessExec("./z3", "-smt2", "-in");

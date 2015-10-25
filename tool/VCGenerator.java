@@ -4,6 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.Map;
+import java.util.Set;
+import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.ProcedureDeclContext;
 import util.assertions.Assertion;
 import util.assignments.Assignment;
@@ -12,18 +14,17 @@ public class VCGenerator {
 
 	private ProcedureDeclContext proc;
         
-        private VerifierVisitor verifierVisitor;
+        private VerifierVisitor visitor;
 	
-	public VCGenerator(ProcedureDeclContext proc) {
+	public VCGenerator(ProcedureDeclContext proc, VerifierVisitor visitor) {
 		this.proc = proc;
-                verifierVisitor = new VerifierVisitor();
-		// TODO: You will probably find it useful to add more fields and constructor arguments
+                this.visitor = visitor;
 	}
 	
 	public StringBuilder generateVC() throws FileNotFoundException {
-                verifierVisitor.visitProcedureDecl(proc);
-                FreshStructure fresh = verifierVisitor.getFresh();
-                SsaRepresentation ssa = verifierVisitor.getSsa();
+                visitor.visitProcedureDecl(proc);
+                FreshStructure fresh = visitor.getFresh();
+                SsaRepresentation ssa = visitor.getSsa();
             
                 try (PrintStream out = new PrintStream(new FileOutputStream("ssa_format.txt"))) {
                     out.print(ssa.getText(fresh));

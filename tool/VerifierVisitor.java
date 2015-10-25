@@ -52,7 +52,7 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
 
 	private Map<String, Integer> actualProcedures = new HashMap<>();
 
-	private Set<String> globals = new HashSet<>();
+	private Set<String> globals;
 
 	private HashSet<String> parameters = null;
 	
@@ -68,6 +68,10 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         private Expression expression;
         
+        public VerifierVisitor(Set<String> globalVariables) {
+            globals = globalVariables;
+        }
+        
         public SsaRepresentation getSsa(){
             return ssa;
         }
@@ -75,18 +79,6 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         public FreshStructure getFresh(){
             return fresh;
         }
-
-	/*@Override
-	public Void visitProgram(ProgramContext ctx) {
-		for(VarDeclContext varDecl : ctx.globals) {
-			globals.add(varDecl.ident.name.getText());
-		}
-		
-		for(ProcedureDeclContext proc : ctx.procedures) {
-			visit(proc);
-		}
-		return null;
-	}*/
 	
 	/*@Override
 	public Void visitBlockStmt(BlockStmtContext ctx) {
@@ -103,8 +95,13 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             mapping = new HashMap<String, Integer>();
             
             String name = ctx.name.getText();
-
             actualProcedures.put(name, ctx.formals.size());
+            
+            for(String globalVar : globals) {
+                fresh.addNewVar(globalVar);
+                mapping.put(globalVar, 0);
+            }
+            
             parameters = new HashSet<>();
             pushLocalsStack();
             for(FormalParamContext fp : ctx.formals) {
@@ -120,7 +117,6 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             
             //TODO : visit return stmt
             
-            //Void result = super.visitProcedureDecl(ctx);
             popLocalsStack();
             parameters = null;
             return null;

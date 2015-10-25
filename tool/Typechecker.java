@@ -205,6 +205,10 @@ public class Typechecker extends SimpleCBaseVisitor<Void> {
 	public Iterable<String> getErrors() {
 		return errors;
 	}
+        
+        public Set<String> getGlobals() {
+            return globals;
+        }
 	
 }
 
