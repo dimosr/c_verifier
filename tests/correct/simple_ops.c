@@ -1,5 +1,5 @@
 // RUN: %tool "%s" > "%t"
-// RUN: %diff %CORRECT "%t"
+// RUN: %diff %INCORRECT "%t"
 
 int foo() {
 
