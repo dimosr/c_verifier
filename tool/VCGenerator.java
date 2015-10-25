@@ -1,4 +1,5 @@
 package tool;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
@@ -24,7 +25,9 @@ public class VCGenerator {
                 FreshStructure fresh = verifierVisitor.getFresh();
                 SsaRepresentation ssa = verifierVisitor.getSsa();
             
-                System.out.print(ssa.getText(fresh));
+                try (PrintStream out = new PrintStream(new FileOutputStream("ssa_format.txt"))) {
+                    out.print(ssa.getText(fresh));
+                }
             
 		StringBuilder result = new StringBuilder("(set-logic QF_BV)\n");
 		result.append("(set-option :produce-models true)\n");

@@ -35,38 +35,35 @@ public class SsaRepresentation {
     }
     
     public String getText(FreshStructure fresh) {
-        StringBuilder smtFormula = new StringBuilder();
+        StringBuilder ssaFormula = new StringBuilder();
             
         /**  variables declarations  **/
         Map<String, Integer> freshMapping = fresh.getAllVariablesMappings();
         for(String variableName : freshMapping.keySet() ) {
             for(int i = 0; i <= freshMapping.get(variableName); i++) {
                 int index = freshMapping.get(variableName);
-                smtFormula.append("int ").append(variableName).append(index).append("; \n");
+                ssaFormula.append("int ").append(variableName).append(index).append("; \n");
             }
         }
             
-        smtFormula.append("\n");
+        ssaFormula.append("\n");
             
         /**   assignments - MUST use prefix operators **/
         for(Assignment assignment : this.getAssignments()) {
-            smtFormula.append(" ( ").append(assignment.variableName).append(" == ");
-            smtFormula.append(assignment.expression.toString());
-            smtFormula.append(" ) ");
-            smtFormula.append(" && ");
+            ssaFormula.append(assignment.variableName).append(" = ");
+            ssaFormula.append(assignment.expression.toString()).append("; \n");
         }
             
-        smtFormula.append("\n");
+        ssaFormula.append("\n");
             
         /**  assertions **/
         for(Assertion assertion : this.getAssertions()) {
-            smtFormula.append("assert ( ");
-            smtFormula.append(assertion.expression.toString());
-            smtFormula.append(" ); \n");
+            ssaFormula.append("assert ( ");
+            ssaFormula.append(assertion.expression.toString());
+            ssaFormula.append(" ); \n");
         }
-        smtFormula.append(" ) ");
             
-        return smtFormula.toString();
+        return ssaFormula.toString();
     }
     
     public String translateToSmt(FreshStructure fresh){
