@@ -133,7 +133,7 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 mapping.put(name, 0);
 		
 		peekLocalsStack().add(name);
-		return super.visitVarDecl(ctx);
+		return null;
 	}
         
         @Override
@@ -151,13 +151,15 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
 	public Void visitAssignStmt(AssignStmtContext ctx) {
             expression = new Expression();
             
-            String variableName = ctx.lhs.ident.name.getText();
-            Integer newValue = fresh.fresh(variableName);
-            variableName = variableName + newValue;
-            mapping.put(variableName, newValue);
             super.visitExpr(ctx.rhs);
             
-            Assignment assignment = new Assignment(variableName, expression);
+            String variableName = ctx.lhs.ident.name.getText();
+            Integer newValue = fresh.fresh(variableName);
+            String ssaVariableName = variableName + newValue;
+            mapping.put(variableName, newValue);
+            
+            
+            Assignment assignment = new Assignment(ssaVariableName, expression);
             ssa.addAssignment(assignment);
             expression = null;
             return null;
@@ -436,7 +438,7 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         @Override
         public Void visitParenExpr(ParenExprContext ctx) {
             expression.addElement(" ( ");
-            visitParenExpr(ctx);
+            visitExpr(ctx.arg);
             expression.addElement(" ) ");
             return null;
         }

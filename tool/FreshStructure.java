@@ -13,7 +13,7 @@ public class FreshStructure {
     public int fresh(String variableName) {
         int nextIndex = freshMap.get(variableName);
         freshMap.put(variableName, nextIndex+1);
-        return nextIndex;
+        return nextIndex+1;
     }
     
     public void addNewVar(String variableName) {
