@@ -40,9 +40,9 @@ public class SsaRepresentation {
         /**  variables declarations  **/
         Map<String, Integer> freshMapping = fresh.getAllVariablesMappings();
         for(String variableName : freshMapping.keySet() ) {
-            for(int i = 0; i <= freshMapping.get(variableName); i++) {
-                int index = freshMapping.get(variableName);
-                ssaFormula.append("int ").append(variableName).append(index).append("; \n");
+            Integer biggestIndex = freshMapping.get(variableName);
+            for(int i = 0; i <= biggestIndex; i++) {
+                ssaFormula.append("int ").append(variableName).append(i).append("; \n");
             }
         }
             
