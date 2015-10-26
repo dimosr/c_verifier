@@ -83,7 +83,7 @@ public class SsaRepresentation {
         /**   assignments - MUST use prefix operators **/
         for(Assignment assignment : this.getAssignments()) {
             pseudoSMT.append("(").append(assignment.variableName).append(" == ");
-            pseudoSMT.append(assignment.expression.toString()).append(") && \n");
+            pseudoSMT.append(getExpressionSsa(assignment.expression)).append(") && \n");
         }
         pseudoSMT.append("\n");
             
@@ -91,7 +91,7 @@ public class SsaRepresentation {
         pseudoSMT.append(" !( \n");
         for(Assertion assertion : this.getAssertions()) {
             pseudoSMT.append("\t ( ");
-            pseudoSMT.append(assertion.expression.toString());
+            pseudoSMT.append(getExpressionSsa(assertion.expression));
             pseudoSMT.append(" ) ");
             pseudoSMT.append(" && \n");
         }
