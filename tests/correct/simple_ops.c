@@ -6,7 +6,7 @@ int foo() {
     int x;
     int y;
     x = 20;
-    y = (x - 5)*4;
+    y = x - 5*4;
     assert (y - 10 ) == 50;
     int z;
     int k;
