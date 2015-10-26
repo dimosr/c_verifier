@@ -1,6 +1,5 @@
 package util.assertions;
 
-import util.conditions.Condition;
 import util.expressions.Expression;
 
 public class Assertion {

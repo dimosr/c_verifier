@@ -44,7 +44,20 @@ import parser.SimpleCParser.VarrefContext;
 import parser.SimpleCParser.VarrefExprContext;
 import util.assertions.Assertion;
 import util.assignments.Assignment;
+import util.expressions.BinaryExpression;
+import util.expressions.ConstantExpression;
 import util.expressions.Expression;
+import util.expressions.OldExpression;
+import util.expressions.ParenthesisExpression;
+import util.expressions.ResultExpression;
+import util.expressions.TernaryExpression;
+import util.expressions.UnaryExpression;
+import util.expressions.VarRefExpression;
+import util.misc.Tuple;
+import util.operators.BinaryOperator;
+import util.operators.BinaryOperatorType;
+import util.operators.UnaryOperator;
+import util.operators.UnaryOperatorType;
 
 
 public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
@@ -134,7 +147,6 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         @Override
         public Void visitAssertStmt(AssertStmtContext ctx) {
-            expression = new Expression();
             super.visitExpr(ctx.condition);
             
             Assertion assertion = new Assertion(expression);
@@ -145,7 +157,6 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         @Override
 	public Void visitAssignStmt(AssignStmtContext ctx) {
-            expression = new Expression();
             
             super.visitExpr(ctx.rhs);
             
@@ -236,16 +247,27 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitLorExpr(ctx.single);
             }
             else{
+                TernaryExpression ternaryExpr = null;
+                
                 visitLorExpr(ctx.args.get(0));
+                Expression conditionalExpr = expression;
+                expression = null;
+                ternaryExpr = new TernaryExpression(conditionalExpr);
                 int index = 1;
                 while(index < ctx.args.size()) {
-                    expression.addElement(" ? ");
                     visitLorExpr(ctx.args.get(index));
+                    Expression ifExpr = expression;
+                    expression = null;
                     index++;
-                    expression.addElement(" : ");
                     visitLorExpr(ctx.args.get(index));
+                    Expression thenExpr = expression;
+                    expression = null;
                     index++;
+                    
+                    ternaryExpr.addRemainingExpr(new Tuple(ifExpr, thenExpr));
                 }
+                
+                expression = ternaryExpr;
             }
             return null;
         }
@@ -256,11 +278,21 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitLandExpr(ctx.single);
             }
             else {
-                visitLandExpr(ctx.args.get(0)); 
+                BinaryExpression binExpr = null;
+                
+                visitLandExpr(ctx.args.get(0));
+                Expression leftExpr = expression;
+                expression = null;
+                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
-                    expression.addElement(" || ");
                     visitLandExpr(ctx.args.get(i));
+                    BinaryOperator op = new BinaryOperator(BinaryOperatorType.LOR);
+                    Expression rightExpr = expression;
+                    expression = null;
+                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
                 }
+                
+                expression = binExpr;
             }
             return null;
         }
@@ -271,11 +303,21 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitBorExpr(ctx.single);
             }
             else {
-                visitBorExpr(ctx.args.get(0)); 
+                BinaryExpression binExpr = null;
+                
+                visitBorExpr(ctx.args.get(0));
+                Expression leftExpr = expression;
+                expression = null;
+                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
-                    expression.addElement(" && ");
                     visitBorExpr(ctx.args.get(i));
+                    BinaryOperator op = new BinaryOperator(BinaryOperatorType.LAND);
+                    Expression rightExpr = expression;
+                    expression = null;
+                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
                 }
+                
+                expression = binExpr;
             }
             return null;
         }
@@ -286,11 +328,21 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitBxorExpr(ctx.single);
             }
             else {
-                visitBxorExpr(ctx.args.get(0)); 
+                BinaryExpression binExpr = null;
+                
+                visitBxorExpr(ctx.args.get(0));
+                Expression leftExpr = expression;
+                expression = null;
+                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
-                    expression.addElement(" | ");
                     visitBxorExpr(ctx.args.get(i));
+                    BinaryOperator op = new BinaryOperator(BinaryOperatorType.BOR);
+                    Expression rightExpr = expression;
+                    expression = null;
+                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
                 }
+                
+                expression = binExpr;
             }
             return null;
         }
@@ -301,11 +353,21 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitBandExpr(ctx.single);
             }
             else {
-                visitBandExpr(ctx.args.get(0)); 
+                BinaryExpression binExpr = null;
+                
+                visitBandExpr(ctx.args.get(0));
+                Expression leftExpr = expression;
+                expression = null;
+                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
-                    expression.addElement(" ^ ");
                     visitBandExpr(ctx.args.get(i));
+                    BinaryOperator op = new BinaryOperator(BinaryOperatorType.BXOR);
+                    Expression rightExpr = expression;
+                    expression = null;
+                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
                 }
+                
+                expression = binExpr;
             }
             return null;
         }
@@ -316,11 +378,21 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitEqualityExpr(ctx.single);
             }
             else{
+                BinaryExpression binExpr = null;
+                
                 visitEqualityExpr(ctx.args.get(0));
+                Expression leftExpr = expression;
+                expression = null;
+                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
-                    expression.addElement(" & ");
                     visitEqualityExpr(ctx.args.get(i));
+                    BinaryOperator op = new BinaryOperator(BinaryOperatorType.BAND);
+                    Expression rightExpr = expression;
+                    expression = null;
+                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
                 }
+                
+                expression = binExpr;
             }
             return null;
         }
@@ -331,11 +403,22 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitRelExpr(ctx.single);
             }
             else {
+                BinaryExpression binExpr = null;
+                
                 visitRelExpr(ctx.args.get(0));
+                Expression leftExpr = expression;
+                expression = null;
+                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
-                    expression.addElement(" " + ctx.ops.get(i-1).getText() + " ");
+                    String opString = ctx.ops.get(i-1).getText();
                     visitRelExpr(ctx.args.get(i));
+                    BinaryOperator op = new BinaryOperator(BinaryOperatorType.findBySsaForm(opString));
+                    Expression rightExpr = expression;
+                    expression = null;
+                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
                 }
+                
+                expression = binExpr;
             }
             return null;
         }
@@ -346,11 +429,22 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitShiftExpr(ctx.single);
             }
             else {
+                BinaryExpression binExpr = null;
+                
                 visitShiftExpr(ctx.args.get(0));
+                Expression leftExpr = expression;
+                expression = null;
+                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
-                    expression.addElement(" " + ctx.ops.get(i-1).getText() + " ");
+                    String opString = ctx.ops.get(i-1).getText();
                     visitShiftExpr(ctx.args.get(i));
+                    BinaryOperator op = new BinaryOperator(BinaryOperatorType.findBySsaForm(opString));
+                    Expression rightExpr = expression;
+                    expression = null;
+                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
                 }
+                
+                expression = binExpr;
             }
             return null;
         }
@@ -361,11 +455,22 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitAddExpr(ctx.single);
             }
             else {
+                BinaryExpression binExpr = null;
+                
                 visitAddExpr(ctx.args.get(0));
+                Expression leftExpr = expression;
+                expression = null;
+                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
-                    expression.addElement(" " + ctx.ops.get(i-1).getText() + " ");
+                    String opString = ctx.ops.get(i-1).getText();
                     visitAddExpr(ctx.args.get(i));
+                    BinaryOperator op = new BinaryOperator(BinaryOperatorType.findBySsaForm(opString));
+                    Expression rightExpr = expression;
+                    expression = null;
+                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
                 }
+                
+                expression = binExpr;
             }
             return null;
         }
@@ -376,26 +481,49 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitMulExpr(ctx.single);
             }
             else {
+                BinaryExpression binExpr = null;
+                
                 visitMulExpr(ctx.args.get(0));
+                Expression leftExpr = expression;
+                expression = null;
+                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
-                    expression.addElement(" " + ctx.ops.get(i-1).getText() + " ");
+                    String opString = ctx.ops.get(i-1).getText();
                     visitMulExpr(ctx.args.get(i));
+                    BinaryOperator op = new BinaryOperator(BinaryOperatorType.findBySsaForm(opString));
+                    Expression rightExpr = expression;
+                    expression = null;
+                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
                 }
+                
+                expression = binExpr;
             }
             return null;
         }
         
         @Override
         public Void visitMulExpr(MulExprContext ctx) {
+            
             if(ctx.single != null) {
                 visitUnaryExpr(ctx.single);
             }
             else {
+                BinaryExpression binExpr = null;
+                
                 visitUnaryExpr(ctx.args.get(0));
+                Expression leftExpr = expression;
+                expression = null;
+                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
-                    expression.addElement(" " + ctx.ops.get(i-1).getText() + " ");
+                    String opString = ctx.ops.get(i-1).getText();
                     visitUnaryExpr(ctx.args.get(i));
+                    BinaryOperator op = new BinaryOperator(BinaryOperatorType.findBySsaForm(opString));
+                    Expression rightExpr = expression;
+                    expression = null;
+                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
                 }
+                
+                expression = binExpr;
             }
             return null;
         }
@@ -406,10 +534,22 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 super.visitAtomExpr(ctx.single);
             }
             else {
-                for(Token op : ctx.ops){
-                    expression.addElement(" " + op.getText() + " ");
-                }
+                UnaryExpression unaryExpr = null;
+                
+                // reverse visiting order just for the initialization
                 super.visitAtomExpr(ctx.arg);
+                Expression expr = expression;
+                expression = null;
+                unaryExpr = new UnaryExpression(expr);
+                
+                
+                for(Token op : ctx.ops){
+                    String opString = op.getText();
+                    UnaryOperator operator = new UnaryOperator(UnaryOperatorType.findBySsaForm(opString));
+                    unaryExpr.addOperator(operator);
+                }
+                
+                expression = unaryExpr;
             }
             return null;
         }
@@ -418,8 +558,9 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         @Override
         public Void visitNumberExpr(NumberExprContext ctx) {
-            String t = ctx.number.getText();
-            expression.addElement(ctx.number.getText());
+            String value = ctx.number.getText();
+            ConstantExpression constantExpr = new ConstantExpression(value);
+            expression = constantExpr;
             return null;
         }
         
@@ -427,29 +568,35 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
 	public Void visitVarrefExpr(VarrefExprContext ctx) {
             String variableName = ctx.var.ident.name.getText();
             Integer variableIndex = mapping.get(variableName);
-            expression.addElement(variableName + variableIndex);
+            String variableSsaName = variableName + variableIndex;
+            VarRefExpression varRefExpr = new VarRefExpression(variableSsaName);
+            expression = varRefExpr;
             return null;
         }
         
         @Override
         public Void visitParenExpr(ParenExprContext ctx) {
-            expression.addElement(" ( ");
             visitExpr(ctx.arg);
-            expression.addElement(" ) ");
+            Expression innerExpr = expression;
+            expression = null;
+            ParenthesisExpression parenExpr = new ParenthesisExpression(innerExpr);
+            expression = parenExpr;
+            
             return null;
         }
         
         @Override
         public Void visitResultExpr(ResultExprContext ctx) {
-            expression.addElement(ctx.resultTok.getText());
+            ResultExpression resultExpr = new ResultExpression();
+            expression = resultExpr;
             return null;
         }
         
         @Override
         public Void visitOldExpr(OldExprContext ctx) {
-            expression.addElement(ctx.oldTok.getText());
-            expression.addElement(ctx.arg.ident.name.getText());
-            return visitVarref(ctx.arg);
+            String variableName = ctx.arg.ident.name.getText();
+            OldExpression oldExpr = new OldExpression(variableName);
+            return null;
         }
         
 }
