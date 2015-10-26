@@ -29,6 +29,10 @@ public class VCGenerator {
                 try (PrintStream out = new PrintStream(new FileOutputStream("ssa_format.txt"))) {
                     out.print(ssa.getText(fresh));
                 }
+                
+                try (PrintStream out = new PrintStream(new FileOutputStream("pseudo_smt.txt"))) {
+                    out.print(ssa.translateToPseudoSmt(fresh));
+                }
             
 		StringBuilder result = new StringBuilder("(set-logic QF_BV)\n");
 		result.append("(set-option :produce-models true)\n");

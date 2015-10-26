@@ -66,7 +66,30 @@ public class SsaRepresentation {
         return ssaFormula.toString();
     }
     
-    public String translateToSmt(FreshStructure fresh){
+    public String translateToPseudoSmt(FreshStructure fresh){
+        StringBuilder pseudoSMT = new StringBuilder();
+        
+        /**   assignments - MUST use prefix operators **/
+        for(Assignment assignment : this.getAssignments()) {
+            pseudoSMT.append("(").append(assignment.variableName).append(" == ");
+            pseudoSMT.append(assignment.expression.toString()).append(") && \n");
+        }
+        pseudoSMT.append("\n");
+            
+        /**  assertions **/
+        pseudoSMT.append(" !( \n");
+        for(Assertion assertion : this.getAssertions()) {
+            pseudoSMT.append("\t ( ");
+            pseudoSMT.append(assertion.expression.toString());
+            pseudoSMT.append(" ) ");
+            pseudoSMT.append(" && \n");
+        }
+        pseudoSMT.append(" ) ");
+        
+        return pseudoSMT.toString();
+    }
+    
+    public String translateToSmtFormula(FreshStructure fresh) {
         StringBuilder smtFormula = new StringBuilder();
         
         /**  variables declarations  **/
@@ -84,15 +107,7 @@ public class SsaRepresentation {
         
         smtFormula.append("\n");
             
-        /**  assertions **/
-        smtFormula.append(" !( ");
-        for(Assertion assertion : this.getAssertions()) {
-            smtFormula.append(" ( ");
-            smtFormula.append(assertion.expression.toString());
-            smtFormula.append(" ) ");
-            smtFormula.append(" && ");
-        }
-        smtFormula.append(" ) ");
+        /**  assertions - MUST use prefix operators**/
         
         return smtFormula.toString();
     }
