@@ -15,6 +15,7 @@ import parser.SimpleCParser;
 import parser.SimpleCParser.AddExprContext;
 import parser.SimpleCParser.AssertStmtContext;
 import parser.SimpleCParser.AssignStmtContext;
+import parser.SimpleCParser.AssumeStmtContext;
 import parser.SimpleCParser.AtomExprContext;
 import parser.SimpleCParser.BandExprContext;
 import parser.SimpleCParser.BlockStmtContext;
@@ -86,6 +87,8 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         private Set<String> modSet;
         
+        private Expression assumption;
+        
         public VerifierVisitor(Set<String> globalVariables) {
             globals = globalVariables;
         }
@@ -104,9 +107,11 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             ssa = new SsaRepresentation();
             Map<String, Integer> currentMapping = new HashMap<String, Integer>();
             mapping = currentMapping;
-            Expression currentPredicate = new ConstantExpression("1");    //true
-            predicate = currentPredicate;
+            Expression initialPredicate = new ConstantExpression("1");    //true
+            predicate = initialPredicate;
             modSet = new HashSet<String>();
+            Expression initialAssumption = new ConstantExpression("1");    //true
+            assumption = initialAssumption;
             
             String name = ctx.name.getText();
             actualProcedures.put(name, ctx.formals.size());
@@ -151,8 +156,10 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             super.visitExpr(ctx.condition);
             Expression rightHandSideExpr = expression;
             
-            BinaryExpression assertionExpr = new BinaryExpression(predicate, new BinaryOperator(BinaryOperatorType.IMPLIES), rightHandSideExpr);
+            Expression leftHandSide = new BinaryExpression(assumption, new BinaryOperator(BinaryOperatorType.LAND), predicate);
+            BinaryExpression assertionExpr = new BinaryExpression(leftHandSide, new BinaryOperator(BinaryOperatorType.IMPLIES), rightHandSideExpr);
             Assertion assertion = new Assertion(assertionExpr);
+            
             ssa.addAssertion(assertion);
             expression = null;
             return null;
@@ -278,6 +285,20 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
 	public Void visitHavocStmt(HavocStmtContext ctx) {
 		return super.visitHavocStmt(ctx);
 	}*/
+        
+        public Void visitAssumeStmt(AssumeStmtContext ctx) {
+            Expression previousAssumption = assumption;
+            
+            visitExpr(ctx.condition);
+            Expression evaluatedExpression = expression;
+            expression = null;
+            
+            Expression leftHandSide = new BinaryExpression(assumption, new BinaryOperator(BinaryOperatorType.LAND), predicate);
+            Expression newAssumption = new BinaryExpression(leftHandSide, new BinaryOperator(BinaryOperatorType.IMPLIES), evaluatedExpression);
+            
+            assumption = newAssumption;
+            return null;
+        }
         
         /* 
             Visitors for various expression types
