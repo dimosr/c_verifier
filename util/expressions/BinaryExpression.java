@@ -15,6 +15,11 @@ public class BinaryExpression extends Expression {
         this.remainingExpr = new ArrayList<Tuple<BinaryOperator, Expression>>();
     }
     
+    public BinaryExpression(Expression leftExpr, BinaryOperator operator, Expression rightExpr) {
+        this(leftExpr);
+        remainingExpr.add(new Tuple<BinaryOperator, Expression>(operator, rightExpr));
+    }
+    
     public void addRemainingExpr(Tuple<BinaryOperator, Expression> newTuple) {
         this.remainingExpr.add(newTuple);
     }

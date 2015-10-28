@@ -18,8 +18,9 @@ public enum BinaryOperatorType {
     MINUS ("-", "bvsub"), 
     MULT ("*", "bvmul"), 
     DIV ("/", "bvsdiv"), 
-    MOD ("%", "bvsmod") ;
-    
+    MOD ("%", "bvsmod"),
+    IMPLIES ("==>", "implies");
+
     private final String ssaForm;
     private final String smtForm;
     BinaryOperatorType(String ssaForm, String smtForm) {

@@ -14,6 +14,11 @@ public class UnaryExpression extends Expression {
         this.expr = expr;
     }
     
+    public UnaryExpression(UnaryOperator op, Expression expr) {
+        this(expr);
+        operators.add(op);
+    }
+    
     public void addOperator(UnaryOperator op) {
         operators.add(op);
     }

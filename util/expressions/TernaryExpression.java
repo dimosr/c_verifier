@@ -14,6 +14,11 @@ public class TernaryExpression extends Expression {
         this.remainingExpr = new ArrayList<Tuple<Expression, Expression>>();
     }
     
+    public TernaryExpression(Expression conditionalExpression, Expression ifExpression, Expression elseExpression) {
+        this(conditionalExpression);
+        remainingExpr.add(new Tuple<Expression, Expression> (ifExpression, elseExpression));
+    }
+    
     public void addRemainingExpr(Tuple<Expression, Expression> newTuple) {
         remainingExpr.add(newTuple);
     }
