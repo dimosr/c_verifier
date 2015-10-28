@@ -160,9 +160,6 @@ public class SsaRepresentation {
             ParenthesisExpression parenExpr = (ParenthesisExpression) expression;
             ssaFormula.append("( ").append(getExpressionSsa(parenExpr.expr)).append(" )");
         }
-        else if(expression.getType() == ExpressionType.RESULT) {
-            // TO DO
-        }
         else if(expression.getType() == ExpressionType.TERNARY) {
             TernaryExpression ternaryExpr = (TernaryExpression) expression;
             ssaFormula.append(getExpressionSsa(ternaryExpr.conditionalExpression));
@@ -208,9 +205,6 @@ public class SsaRepresentation {
         else if(expression.getType() == ExpressionType.PARENTHESIS){
             ParenthesisExpression parenExpr = (ParenthesisExpression) expression;
             smtFormula.append("( ").append(getExpressionSMT(parenExpr.expr)).append(" )");
-        }
-        else if(expression.getType() == ExpressionType.RESULT) {
-            // TO DO
         }
         else if(expression.getType() == ExpressionType.TERNARY) {
             TernaryExpression ternaryExpr = (TernaryExpression) expression;

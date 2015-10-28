@@ -53,7 +53,6 @@ import util.expressions.ConstantExpression;
 import util.expressions.Expression;
 import util.expressions.OldExpression;
 import util.expressions.ParenthesisExpression;
-import util.expressions.ResultExpression;
 import util.expressions.TernaryExpression;
 import util.expressions.UnaryExpression;
 import util.expressions.VarRefExpression;
