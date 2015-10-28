@@ -34,9 +34,11 @@ import parser.SimpleCParser.MulExprContext;
 import parser.SimpleCParser.NumberExprContext;
 import parser.SimpleCParser.OldExprContext;
 import parser.SimpleCParser.ParenExprContext;
+import parser.SimpleCParser.PrepostContext;
 import parser.SimpleCParser.ProcedureDeclContext;
 import parser.SimpleCParser.ProgramContext;
 import parser.SimpleCParser.RelExprContext;
+import parser.SimpleCParser.RequiresContext;
 import parser.SimpleCParser.ResultExprContext;
 import parser.SimpleCParser.ShiftExprContext;
 import parser.SimpleCParser.TernExprContext;
@@ -89,6 +91,12 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         private Expression assumption;
         
+        private boolean executePreConditions;
+        
+        private boolean executePostConditions;
+        
+        Expression returnExpression;
+        
         public VerifierVisitor(Set<String> globalVariables) {
             globals = globalVariables;
         }
@@ -130,11 +138,24 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 currentMapping.put(formalParamName, 0);
             }
             
+            for(PrepostContext preOrPostCondition : ctx.contract){
+                executePreConditions = true;
+                super.visitPrepost(preOrPostCondition);
+                executePreConditions = false;
+            }
+            
             for(SimpleCParser.StmtContext statementCtx : ctx.stmts) {
                 visitStmt(statementCtx);
             }
             
-            //TODO : visit return stmt
+            super.visitExpr(ctx.returnExpr);
+            returnExpression = expression;
+            
+            for(PrepostContext preOrPostCondition : ctx.contract){
+                executePostConditions = true;
+                super.visitPrepost(preOrPostCondition);
+                executePostConditions = false;
+            }
             
             popLocalsStack();
             parameters = null;
@@ -151,18 +172,20 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
 		return null;
 	}
         
-        @Override
-        public Void visitAssertStmt(AssertStmtContext ctx) {
-            super.visitExpr(ctx.condition);
-            Expression rightHandSideExpr = expression;
-            
+        public Void executeAssertionExpression(Expression expression) {
             Expression leftHandSide = new BinaryExpression(assumption, new BinaryOperator(BinaryOperatorType.LAND), predicate);
-            BinaryExpression assertionExpr = new BinaryExpression(leftHandSide, new BinaryOperator(BinaryOperatorType.IMPLIES), rightHandSideExpr);
+            BinaryExpression assertionExpr = new BinaryExpression(leftHandSide, new BinaryOperator(BinaryOperatorType.IMPLIES), expression);
             Assertion assertion = new Assertion(assertionExpr);
             
             ssa.addAssertion(assertion);
             expression = null;
             return null;
+        }
+        
+        @Override
+        public Void visitAssertStmt(AssertStmtContext ctx) {
+            super.visitExpr(ctx.condition);
+            return executeAssertionExpression(expression);
         }
         
         @Override
@@ -182,6 +205,7 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             return null;
 	}
         
+        @Override
         public Void visitIfStmt(IfStmtContext ctx) {
             Expression currentPredicate = predicate;
             Map<String, Integer> currentMapping = mapping;
@@ -288,10 +312,9 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             return null;
 	}
         
-        public Void visitAssumeStmt(AssumeStmtContext ctx) {
+        public Void executeAssumeExpression(Expression expression) {
             Expression previousAssumption = assumption;
             
-            visitExpr(ctx.condition);
             Expression evaluatedExpression = expression;
             expression = null;
             
@@ -299,6 +322,30 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             Expression newAssumption = new BinaryExpression(leftHandSide, new BinaryOperator(BinaryOperatorType.IMPLIES), evaluatedExpression);
             
             assumption = newAssumption;
+            return null;
+        }
+        
+        @Override
+        public Void visitAssumeStmt(AssumeStmtContext ctx) {
+            visitExpr(ctx.condition);
+            return executeAssumeExpression(expression);
+        }
+        
+        @Override
+        public Void visitRequires(RequiresContext ctx) {
+            if(executePreConditions) {
+                visitExpr(ctx.condition);
+                return executeAssumeExpression(expression);
+            }
+            return null;
+        }
+        
+        @Override
+        public Void visitEnsures(EnsuresContext ctx) {
+            if(executePostConditions) {
+                visitExpr(ctx.condition);
+                return executeAssertionExpression(expression);
+            }
             return null;
         }
         
@@ -650,8 +697,7 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         @Override
         public Void visitResultExpr(ResultExprContext ctx) {
-            ResultExpression resultExpr = new ResultExpression();
-            expression = resultExpr;
+            expression = returnExpression;
             return null;
         }
         
