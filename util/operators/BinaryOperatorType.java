@@ -1,24 +1,24 @@
 package util.operators;
 
 public enum BinaryOperatorType {
-    LOR ("||", "lor"), 
-    LAND ("&&", "land"), 
-    BOR ("|", "bor"), 
-    BXOR ("^", "bxor"), 
-    BAND ("&", "band"), 
-    EQUALS ("==", "equals"), 
-    NOT_EQUALS ("!=", "not_equals"), 
-    LESS ("<", "less"), 
-    LESS_EQUAL ("<=", "less_equal"), 
-    GREATER (">", "greater"), 
-    GREATER_EQUAL (">=", "greater_equal"), 
-    LEFT_SHIFT ("<<", "left_shift"), 
-    RIGHT_SHIFT ("<<", "right_shift"), 
-    PLUS ("+", "plus"), 
-    MINUS ("-", "minus"), 
-    MULT ("*", "mult"), 
-    DIV ("/", "div"), 
-    MOD ("%", "mod") ;
+    LOR ("||", "or"), 
+    LAND ("&&", "and"), 
+    BOR ("|", "bvor"), 
+    BXOR ("^", "bvxor"), 
+    BAND ("&", "bvand"), 
+    EQUALS ("==", "="), 
+    NOT_EQUALS ("!=", "!="), 
+    LESS ("<", "bvslt"), 
+    LESS_EQUAL ("<=", "bvsle"), 
+    GREATER (">", "bvsgt"), 
+    GREATER_EQUAL (">=", "bvsge"), 
+    LEFT_SHIFT ("<<", "bvshl"), 
+    RIGHT_SHIFT ("<<", "bvrshr"), 
+    PLUS ("+", "bvadd"), 
+    MINUS ("-", "bvsub"), 
+    MULT ("*", "bvmul"), 
+    DIV ("/", "bvsdiv"), 
+    MOD ("%", "bvsmod") ;
     
     private final String ssaForm;
     private final String smtForm;

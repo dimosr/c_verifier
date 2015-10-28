@@ -1,13 +1,14 @@
 package util.operators;
 
 public enum UnaryOperatorType {
-    PLUS ("+", "plus"), 
-    MINUS ("-", "minus"), 
+    PLUS ("+", "+"), 
+    MINUS ("-", "-"), 
     NOT ("!", "not"), 
-    BNOT ("~", "bnot");
+    BNOT ("~", "bvnot");
     
     private final String ssaForm;
     private final String smtForm;
+   
     UnaryOperatorType(String ssaForm, String smtForm) {
         this.ssaForm = ssaForm;
         this.smtForm = smtForm;

@@ -93,6 +93,7 @@ public class SsaRepresentation {
             pseudoSMT.append("\t ( ");
             pseudoSMT.append(getExpressionSsa(assertion.expression));
             pseudoSMT.append(" ) ");
+            // fix last &&
             pseudoSMT.append(" && \n");
         }
         pseudoSMT.append(" ) ");
@@ -115,10 +116,25 @@ public class SsaRepresentation {
         smtFormula.append("\n");
         
         /**   assignments - MUST use prefix operators **/
-        
+      
+        for(Assignment assignment : this.getAssignments()) {
+            smtFormula.append("(assert (= ")
+                      .append(assignment.variableName).append(" (");
+            smtFormula.append(getExpressionSMT(assignment.expression)).append(")))");
+            // fix last &&
+                 smtFormula.append(" && \n");
+        }
+
         smtFormula.append("\n");
             
         /**  assertions - MUST use prefix operators**/
+        // BAYAN
+        smtFormula.append("(assert (not (and \n(");
+        for(Assertion assertion : this.getAssertions()) {
+            smtFormula.append(getExpressionSsa(assertion.expression));
+            smtFormula.append(") ");
+        }
+        smtFormula.append(")))");
         
         return smtFormula.toString();
     }
@@ -129,6 +145,7 @@ public class SsaRepresentation {
         if(expression.getType() == ExpressionType.BINARY){
             BinaryExpression binExpr = (BinaryExpression) expression;
             ssaFormula.append(getExpressionSsa(binExpr.leftExpr));
+            
             for(Tuple<BinaryOperator, Expression> tuple : binExpr.remainingExpr) {
                 ssaFormula.append(" ").append(tuple.first.operator.ssaForm()).append(" ").append(getExpressionSsa(tuple.second));
             }
@@ -150,12 +167,14 @@ public class SsaRepresentation {
         else if(expression.getType() == ExpressionType.TERNARY) {
             TernaryExpression ternaryExpr = (TernaryExpression) expression;
             ssaFormula.append(getExpressionSsa(ternaryExpr.conditionalExpression));
+            
             for(Tuple<Expression, Expression> tuple : ternaryExpr.remainingExpr) {
                 ssaFormula.append(" ? ").append(getExpressionSsa(tuple.first)).append(" : ").append(getExpressionSsa(tuple.second));
             }
         }
         else if(expression.getType() == ExpressionType.UNARY) {
             UnaryExpression unaryExpr = (UnaryExpression) expression;
+            
             for(UnaryOperator operator : unaryExpr.operators) {
                 ssaFormula.append(operator.operator.ssaForm()).append(" ");
             }
@@ -167,6 +186,55 @@ public class SsaRepresentation {
         }
         
         return ssaFormula.toString();
+    }
+
+    private String getExpressionSMT(Expression expression) {
+        StringBuilder smtFormula = new StringBuilder();
+        
+        if(expression.getType() == ExpressionType.BINARY){
+            BinaryExpression binExpr = (BinaryExpression) expression;
+            
+            for(Tuple<BinaryOperator, Expression> tuple : binExpr.remainingExpr) {
+                smtFormula.append(tuple.first.operator.smtForm()).append(" ").append(getExpressionSMT(tuple.second)).append(" ");
+            }
+            smtFormula.append(getExpressionSMT(binExpr.leftExpr));
+        }
+        else if(expression.getType() == ExpressionType.CONSTANT) {
+            ConstantExpression constExpr = (ConstantExpression) expression;
+            smtFormula.append("_ bv").append(constExpr.intValue).append(" 32)");
+        }
+        else if(expression.getType() == ExpressionType.OLD) {
+            // TO DO
+        }
+        else if(expression.getType() == ExpressionType.PARENTHESIS){
+            ParenthesisExpression parenExpr = (ParenthesisExpression) expression;
+            smtFormula.append("( ").append(getExpressionSMT(parenExpr.expr)).append(" )");
+        }
+        else if(expression.getType() == ExpressionType.RESULT) {
+            // TO DO
+        }
+        else if(expression.getType() == ExpressionType.TERNARY) {
+            TernaryExpression ternaryExpr = (TernaryExpression) expression;
+            smtFormula.append("ite ").append(getExpressionSMT(ternaryExpr.conditionalExpression));
+            
+            for(Tuple<Expression, Expression> tuple : ternaryExpr.remainingExpr) {
+                smtFormula.append(getExpressionSMT(tuple.first)).append(" ").append(getExpressionSMT(tuple.second));
+            }
+        }
+        else if(expression.getType() == ExpressionType.UNARY) {
+            UnaryExpression unaryExpr = (UnaryExpression) expression;
+            
+            for(UnaryOperator operator : unaryExpr.operators) {
+                smtFormula.append(operator.operator.smtForm()).append(" ");
+            }
+            smtFormula.append(getExpressionSMT(unaryExpr.expr));
+        }
+        else if(expression.getType() == ExpressionType.VARIABLE_REFERENCE) {
+            VarRefExpression varRefExpr = (VarRefExpression) expression;
+            smtFormula.append(varRefExpr.variableName);
+        }
+        
+        return smtFormula.toString();
     }
     
 }
