@@ -108,8 +108,7 @@ public class SsaRepresentation {
         Map<String, Integer> freshMapping = fresh.getAllVariablesMappings();
         for(String variableName : freshMapping.keySet() ) {
             for(int i = 0; i <= freshMapping.get(variableName); i++) {
-                int index = freshMapping.get(variableName);
-                smtFormula.append("(declare-fun ").append(variableName).append(index).append(" () (_ BitVec 32)) \n");
+                smtFormula.append("(declare-fun ").append(variableName).append(i).append(" () (_ BitVec 32)) \n");
             }
         }
         
