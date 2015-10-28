@@ -281,10 +281,12 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
 		localsStack.add(frame);
 	}
 
-	/*@Override
+	@Override
 	public Void visitHavocStmt(HavocStmtContext ctx) {
-		return super.visitHavocStmt(ctx);
-	}*/
+            String variableName = ctx.var.ident.getText();
+            fresh.fresh(variableName);
+            return null;
+	}
         
         public Void visitAssumeStmt(AssumeStmtContext ctx) {
             Expression previousAssumption = assumption;
