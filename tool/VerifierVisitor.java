@@ -26,6 +26,7 @@ import parser.SimpleCParser.EqualityExprContext;
 import parser.SimpleCParser.ExprContext;
 import parser.SimpleCParser.FormalParamContext;
 import parser.SimpleCParser.HavocStmtContext;
+import parser.SimpleCParser.IfStmtContext;
 import parser.SimpleCParser.LandExprContext;
 import parser.SimpleCParser.LorExprContext;
 import parser.SimpleCParser.MulExprContext;
@@ -77,9 +78,13 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         private FreshStructure fresh;
         
+        private Expression expression;
+        
         private Map<String, Integer> mapping;
         
-        private Expression expression;
+        private Expression predicate;
+        
+        private Set<String> modSet;
         
         public VerifierVisitor(Set<String> globalVariables) {
             globals = globalVariables;
@@ -93,26 +98,22 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             return fresh;
         }
 	
-	/*@Override
-	public Void visitBlockStmt(BlockStmtContext ctx) {
-		pushLocalsStack();
-		Void result = super.visitBlockStmt(ctx);
-		popLocalsStack();
-		return result;
-	}*/
-	
 	@Override
 	public Void visitProcedureDecl(ProcedureDeclContext ctx) {
             fresh = new FreshStructure();
             ssa = new SsaRepresentation();
-            mapping = new HashMap<String, Integer>();
+            Map<String, Integer> currentMapping = new HashMap<String, Integer>();
+            mapping = currentMapping;
+            Expression currentPredicate = new ConstantExpression("1");    //true
+            predicate = currentPredicate;
+            modSet = new HashSet<String>();
             
             String name = ctx.name.getText();
             actualProcedures.put(name, ctx.formals.size());
             
             for(String globalVar : globals) {
                 fresh.addNewVar(globalVar);
-                mapping.put(globalVar, 0);
+                currentMapping.put(globalVar, 0);
             }
             
             parameters = new HashSet<>();
@@ -121,7 +122,7 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
 		String formalParamName = fp.ident.name.getText();
 		parameters.add(formalParamName);
                 fresh.addNewVar(formalParamName);
-                mapping.put(formalParamName, 0);
+                currentMapping.put(formalParamName, 0);
             }
             
             for(SimpleCParser.StmtContext statementCtx : ctx.stmts) {
@@ -148,8 +149,10 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         @Override
         public Void visitAssertStmt(AssertStmtContext ctx) {
             super.visitExpr(ctx.condition);
+            Expression rightHandSideExpr = expression;
             
-            Assertion assertion = new Assertion(expression);
+            BinaryExpression assertionExpr = new BinaryExpression(predicate, new BinaryOperator(BinaryOperatorType.IMPLIES), rightHandSideExpr);
+            Assertion assertion = new Assertion(assertionExpr);
             ssa.addAssertion(assertion);
             expression = null;
             return null;
@@ -157,21 +160,87 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         @Override
 	public Void visitAssignStmt(AssignStmtContext ctx) {
-            
-            super.visitExpr(ctx.rhs);
-            
             String variableName = ctx.lhs.ident.name.getText();
             Integer newValue = fresh.fresh(variableName);
             String ssaVariableName = variableName + newValue;
-            mapping.put(variableName, newValue);
             
-            
+            super.visitExpr(ctx.rhs);
             Assignment assignment = new Assignment(ssaVariableName, expression);
             ssa.addAssignment(assignment);
+            
+            modSet.add(variableName);
+
+            mapping.put(variableName, newValue);        
             expression = null;
             return null;
 	}
-	
+        
+        public Void visitIfStmt(IfStmtContext ctx) {
+            Expression currentPredicate = predicate;
+            Map<String, Integer> currentMapping = mapping;
+            Set<String> currentModSet = modSet;
+            
+            visitExpr(ctx.condition);
+            Expression newPredicate = expression;
+            
+            
+            Map<String, Integer> mapping1 = new HashMap<String, Integer>(currentMapping);
+            Map<String, Integer> mapping2 = new HashMap<String, Integer>(currentMapping);
+            
+            BinaryExpression predicate1 = new BinaryExpression(predicate, new BinaryOperator(BinaryOperatorType.LAND), newPredicate);       //Pred && NewPred
+            BinaryExpression predicate2 = new BinaryExpression(predicate,   new BinaryOperator(BinaryOperatorType.LAND)   ,    new UnaryExpression(new UnaryOperator(UnaryOperatorType.NOT), newPredicate)    );        //Pred && ! (NewPred)
+
+            predicate = predicate1;
+            mapping = mapping1;
+            modSet = new HashSet<String>();
+            super.visitBlockStmt(ctx.thenBlock);
+            mapping1 = mapping;
+            Set<String> modSet1 = modSet;
+            
+            Set<String> modSet2 = null;
+            if(ctx.elseBlock != null) {
+                predicate = predicate2;
+                mapping = mapping2;
+                modSet = new HashSet<String>();
+                super.visitBlockStmt(ctx.elseBlock);
+                mapping2 = mapping;
+                modSet2 = modSet;
+            }
+            
+            Set<String> union = new HashSet<String>();
+            for(String variable : modSet1) {
+                union.add(variable);
+            }
+            if(ctx.elseBlock != null) {
+                for(String variable : modSet2) {
+                    union.add(variable);
+                }
+            }
+            
+            for(String variable : union) {
+                currentModSet.add(variable);
+                
+                Integer freshIndex = fresh.fresh(variable);
+                currentMapping.put(variable, freshIndex);
+                String finalVariable = variable + freshIndex;
+
+                String ifVariable = variable + mapping1.get(variable);
+                String elseVariable = variable + mapping2.get(variable);
+                
+                TernaryExpression assignmentExpression = new TernaryExpression(newPredicate, new VarRefExpression(ifVariable), new VarRefExpression(elseVariable)) ;
+                Assignment branchResolutionAssignment = new Assignment(finalVariable, assignmentExpression);
+                
+                ssa.addAssignment(branchResolutionAssignment);
+            }
+            
+            predicate = currentPredicate;
+            mapping = currentMapping;
+            
+            modSet = currentModSet;
+            
+            return null;
+        }
+        
 	/*@Override
 	public Void visitEnsures(EnsuresContext ctx) {
 		inEnsures = true;
@@ -181,39 +250,12 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
 	}*/
 	
 	/*@Override
-	public Void visitResultExpr(ResultExprContext ctx) {
-		return super.visitResultExpr(ctx);
-	}*/
-
-	/*@Override
-	public Void visitOldExpr(parser.SimpleCParser.OldExprContext ctx) {
-		return super.visitOldExpr(ctx);
-	}*/
-	
-	/*@Override
 	public Void visitCallStmt(CallStmtContext ctx) {
 		String name = ctx.callee.getText();
 		int numArgs = ctx.actuals.size();
                 
 		expectedProcedures.put(name, numArgs);
 		return super.visitCallStmt(ctx);
-	}*/
-	
-	/*@Override
-	public Void visitVarref(VarrefContext ctx) {
-		String name = ctx.ident.name.getText();
-		return super.visitVarref(ctx);
-	}*/
-
-	/*private boolean isLocalVariable(String name) {
-		boolean foundLocally = false;
-		for(int i = localsStack.size() - 1; i >= 0; i--) {
-			if(localsStack.get(i).contains(name)) {
-				foundLocally = true;
-				break;
-			}
-		}
-		return foundLocally;
 	}*/
 		
 	private Set<String> peekLocalsStack() {
@@ -553,8 +595,6 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             }
             return null;
         }
-        
-        /** No need to override atomExpr, since we just want to visit the children without no "side-effect" **/
         
         @Override
         public Void visitNumberExpr(NumberExprContext ctx) {
