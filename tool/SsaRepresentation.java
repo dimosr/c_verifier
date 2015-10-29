@@ -17,7 +17,9 @@ import util.expressions.UnaryExpression;
 import util.expressions.VarRefExpression;
 import util.misc.Tuple;
 import util.operators.BinaryOperator;
+import util.operators.BinaryOperatorType;
 import util.operators.UnaryOperator;
+import util.operators.UnaryOperatorType;
 
 public class SsaRepresentation {
     
@@ -82,7 +84,7 @@ public class SsaRepresentation {
         
         /**   assignments - MUST use prefix operators **/
         for(Assignment assignment : this.getAssignments()) {
-            pseudoSMT.append("(").append(assignment.variableName).append(" == ");
+            pseudoSMT.append("( ").append(assignment.variableName).append(" == ");
             pseudoSMT.append(getExpressionSsa(assignment.expression)).append(") && \n");
         }
         pseudoSMT.append("\n");
@@ -91,7 +93,7 @@ public class SsaRepresentation {
         pseudoSMT.append(" !( \n");
         for(Assertion assertion : this.getAssertions()) {
             pseudoSMT.append("\t ( ");
-            pseudoSMT.append(getExpressionSsa(assertion.expression));
+            pseudoSMT.append("(tobool ").append(getExpressionSsa(assertion.expression)).append(" )");
             pseudoSMT.append(" ) ");
             // fix last &&
             pseudoSMT.append(" && \n");
@@ -189,15 +191,32 @@ public class SsaRepresentation {
         
         if(expression.getType() == ExpressionType.BINARY){
             BinaryExpression binExpr = (BinaryExpression) expression;
+            StringBuilder operatorBuilder = new StringBuilder();
+            smtFormula.append(getExpressionSMT(binExpr.leftExpr)).append(" ");
+            long parenthesesSum = 0;
             
             for(Tuple<BinaryOperator, Expression> tuple : binExpr.remainingExpr) {
-                smtFormula.append(tuple.first.operator.smtForm()).append(" ").append(getExpressionSMT(tuple.second)).append(" ");
+                BinaryOperatorType operatorType = tuple.first.operator;
+                if(operatorType.isNumInputNumOutput()) {
+                    smtFormula.insert(0, "(" + operatorType.smtForm() + " ");
+                    smtFormula.append(getExpressionSMT(tuple.second)).append(")");
+                    
+                }
+                else if(operatorType.isNumInputBoolOutput()){
+                    smtFormula.append("(tobv ");
+                    smtFormula.insert(0, "(" + operatorType.smtForm() + " ");
+                    smtFormula.append(getExpressionSMT(tuple.second)).append(")");
+                    smtFormula.append(")");
+                }
+                else if(operatorType.isBoolInputBoolOutput()){
+                    smtFormula.insert(0, "(" + operatorType.smtForm() + " ");
+                    smtFormula.append(getExpressionSMT(tuple.second)).append(")");
+                }
             }
-            smtFormula.append(getExpressionSMT(binExpr.leftExpr));
         }
         else if(expression.getType() == ExpressionType.CONSTANT) {
             ConstantExpression constExpr = (ConstantExpression) expression;
-            smtFormula.append("_ bv").append(constExpr.intValue).append(" 32)");
+            smtFormula.append("(_ bv").append(constExpr.intValue).append(" 32)");
         }
         else if(expression.getType() == ExpressionType.OLD) {
             // TO DO
@@ -216,11 +235,22 @@ public class SsaRepresentation {
         }
         else if(expression.getType() == ExpressionType.UNARY) {
             UnaryExpression unaryExpr = (UnaryExpression) expression;
+            long parenthesesSum = 0;
             
             for(UnaryOperator operator : unaryExpr.operators) {
-                smtFormula.append(operator.operator.smtForm()).append(" ");
+                if((operator.operator == UnaryOperatorType.PLUS) || (operator.operator == UnaryOperatorType.MINUS)){
+                    smtFormula.append("(").append(operator.operator.smtForm());
+                    parenthesesSum++;
+                }
+                else {
+                    smtFormula.append("(tobv32 (").append(operator.operator.smtForm()).append(" (tobool ");
+                    parenthesesSum += 3;
+                }
+                smtFormula.append(" ");
             }
             smtFormula.append(getExpressionSMT(unaryExpr.expr));
+            for(int i = 0; i < parenthesesSum; i++)
+                smtFormula.append(" )");
         }
         else if(expression.getType() == ExpressionType.VARIABLE_REFERENCE) {
             VarRefExpression varRefExpr = (VarRefExpression) expression;

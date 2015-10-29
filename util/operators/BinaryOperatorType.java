@@ -53,4 +53,31 @@ public enum BinaryOperatorType {
         }
         return null;
     }
+    
+    public boolean isNumInputNumOutput() {
+        return (this == BinaryOperatorType.LEFT_SHIFT ||
+               this == BinaryOperatorType.RIGHT_SHIFT ||
+               this == BinaryOperatorType.PLUS ||
+               this == BinaryOperatorType.MINUS ||
+               this == BinaryOperatorType.MULT ||
+               this == BinaryOperatorType.DIV ||
+               this == BinaryOperatorType.MOD);
+    }
+    
+    public boolean isNumInputBoolOutput() {
+        return (this == BinaryOperatorType.LESS ||
+               this == BinaryOperatorType.LESS_EQUAL ||
+               this == BinaryOperatorType.GREATER ||
+               this == BinaryOperatorType.GREATER_EQUAL ||
+               this == BinaryOperatorType.EQUALS ||
+               this == BinaryOperatorType.NOT_EQUALS );
+    }
+    
+    public boolean isBoolInputBoolOutput() {
+        return (this == BinaryOperatorType.LOR ||
+               this == BinaryOperatorType.LAND ||
+               this == BinaryOperatorType.BOR ||
+               this == BinaryOperatorType.BXOR ||
+               this == BinaryOperatorType.BAND);
+    }
 }
