@@ -6,21 +6,22 @@ import util.misc.Tuple;
 
 public class TernaryExpression extends Expression {
     
-    public Expression conditionalExpression;
-    public List<Tuple<Expression, Expression>> remainingExpr;
+    public Expression condExpr;
     
-    public TernaryExpression(Expression conditionalExpression) {
-        this.conditionalExpression = conditionalExpression;
-        this.remainingExpr = new ArrayList<Tuple<Expression, Expression>>();
+    public Expression ifExpr;
+    public Expression elseExpr;
+    
+    public boolean isRecursive;
+    
+    public TernaryExpression(Expression leftExpr, Expression ifExpr, Expression elseExpr, boolean isRecursive) {
+        this.condExpr = leftExpr;
+        this.ifExpr = ifExpr;
+        this.elseExpr = elseExpr;
+        this.isRecursive = isRecursive;
     }
     
-    public TernaryExpression(Expression conditionalExpression, Expression ifExpression, Expression elseExpression) {
-        this(conditionalExpression);
-        remainingExpr.add(new Tuple<Expression, Expression> (ifExpression, elseExpression));
-    }
-    
-    public void addRemainingExpr(Tuple<Expression, Expression> newTuple) {
-        remainingExpr.add(newTuple);
+    public boolean isSimple() {
+        return !isRecursive;
     }
     
     public ExpressionType getType() {
