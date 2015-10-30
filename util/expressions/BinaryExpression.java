@@ -8,20 +8,13 @@ import util.operators.BinaryOperator;
 public class BinaryExpression extends Expression {
     
     public Expression leftExpr;
-    public List<Tuple<BinaryOperator, Expression>> remainingExpr;
+    public BinaryOperator operator;
+    public Expression rightExpr;
     
-    public BinaryExpression(Expression leftExpr) {
-        this.leftExpr = leftExpr;
-        this.remainingExpr = new ArrayList<Tuple<BinaryOperator, Expression>>();
-    }
-    
-    public BinaryExpression(Expression leftExpr, BinaryOperator operator, Expression rightExpr) {
-        this(leftExpr);
-        remainingExpr.add(new Tuple<BinaryOperator, Expression>(operator, rightExpr));
-    }
-    
-    public void addRemainingExpr(Tuple<BinaryOperator, Expression> newTuple) {
-        this.remainingExpr.add(newTuple);
+    public BinaryExpression(Expression left, BinaryOperator operator, Expression right) {
+        this.leftExpr = left;
+        this.operator = operator;
+        this.rightExpr = right;
     }
             
     public ExpressionType getType() {

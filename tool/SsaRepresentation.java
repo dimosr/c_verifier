@@ -145,11 +145,9 @@ public class SsaRepresentation {
         
         if(expression.getType() == ExpressionType.BINARY){
             BinaryExpression binExpr = (BinaryExpression) expression;
-            ssaFormula.append(getExpressionSsa(binExpr.leftExpr));
-            
-            for(Tuple<BinaryOperator, Expression> tuple : binExpr.remainingExpr) {
-                ssaFormula.append(" ").append(tuple.first.operator.ssaForm()).append(" ").append(getExpressionSsa(tuple.second));
-            }
+            ssaFormula.append(getExpressionSsa(binExpr.leftExpr)).append(" ");
+            ssaFormula.append(binExpr.operator.operator.ssaForm()).append(" ");
+            ssaFormula.append(getExpressionSsa(binExpr.rightExpr));
         }
         else if(expression.getType() == ExpressionType.CONSTANT) {
             ConstantExpression constExpr = (ConstantExpression) expression;
@@ -195,7 +193,7 @@ public class SsaRepresentation {
             smtFormula.append(getExpressionSMT(binExpr.leftExpr)).append(" ");
             long parenthesesSum = 0;
             
-            for(Tuple<BinaryOperator, Expression> tuple : binExpr.remainingExpr) {
+            /*for(Tuple<BinaryOperator, Expression> tuple : binExpr.remainingExpr) {
                 BinaryOperatorType operatorType = tuple.first.operator;
                 if(operatorType.isNumInputNumOutput()) {
                     smtFormula.insert(0, "(" + operatorType.smtForm() + " ");
@@ -204,7 +202,7 @@ public class SsaRepresentation {
                 }
                 else if(operatorType.isNumInputBoolOutput()){
                     smtFormula.append("(tobv ");
-                    smtFormula.insert(0, "(" + operatorType.smtForm() + " ");
+                    smtFormula.append("(" + operatorType.smtForm() + " ");
                     smtFormula.append(getExpressionSMT(tuple.second)).append(")");
                     smtFormula.append(")");
                 }
@@ -212,7 +210,7 @@ public class SsaRepresentation {
                     smtFormula.insert(0, "(" + operatorType.smtForm() + " ");
                     smtFormula.append(getExpressionSMT(tuple.second)).append(")");
                 }
-            }
+            }*/
         }
         else if(expression.getType() == ExpressionType.CONSTANT) {
             ConstantExpression constExpr = (ConstantExpression) expression;

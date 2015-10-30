@@ -394,13 +394,13 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitLandExpr(ctx.args.get(0));
                 Expression leftExpr = expression;
                 expression = null;
-                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
-                    visitLandExpr(ctx.args.get(i));
                     BinaryOperator op = new BinaryOperator(BinaryOperatorType.LOR);
+                    visitLandExpr(ctx.args.get(i));
                     Expression rightExpr = expression;
                     expression = null;
-                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
+                    
+                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
                 }
                 
                 expression = binExpr;
@@ -419,13 +419,13 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitBorExpr(ctx.args.get(0));
                 Expression leftExpr = expression;
                 expression = null;
-                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
-                    visitBorExpr(ctx.args.get(i));
                     BinaryOperator op = new BinaryOperator(BinaryOperatorType.LAND);
+                    visitBorExpr(ctx.args.get(i));
                     Expression rightExpr = expression;
                     expression = null;
-                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
+                    
+                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
                 }
                 
                 expression = binExpr;
@@ -444,13 +444,13 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitBxorExpr(ctx.args.get(0));
                 Expression leftExpr = expression;
                 expression = null;
-                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
-                    visitBxorExpr(ctx.args.get(i));
                     BinaryOperator op = new BinaryOperator(BinaryOperatorType.BOR);
+                    visitBxorExpr(ctx.args.get(i));
                     Expression rightExpr = expression;
                     expression = null;
-                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
+                    
+                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
                 }
                 
                 expression = binExpr;
@@ -469,13 +469,13 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitBandExpr(ctx.args.get(0));
                 Expression leftExpr = expression;
                 expression = null;
-                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
-                    visitBandExpr(ctx.args.get(i));
                     BinaryOperator op = new BinaryOperator(BinaryOperatorType.BXOR);
+                    visitBandExpr(ctx.args.get(i));
                     Expression rightExpr = expression;
                     expression = null;
-                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
+                    
+                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
                 }
                 
                 expression = binExpr;
@@ -494,13 +494,13 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitEqualityExpr(ctx.args.get(0));
                 Expression leftExpr = expression;
                 expression = null;
-                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
-                    visitEqualityExpr(ctx.args.get(i));
                     BinaryOperator op = new BinaryOperator(BinaryOperatorType.BAND);
+                    visitEqualityExpr(ctx.args.get(i));
                     Expression rightExpr = expression;
                     expression = null;
-                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
+                    
+                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
                 }
                 
                 expression = binExpr;
@@ -519,14 +519,14 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitRelExpr(ctx.args.get(0));
                 Expression leftExpr = expression;
                 expression = null;
-                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
                     String opString = ctx.ops.get(i-1).getText();
-                    visitRelExpr(ctx.args.get(i));
                     BinaryOperator op = new BinaryOperator(BinaryOperatorType.findBySsaForm(opString));
+                    visitRelExpr(ctx.args.get(i));
                     Expression rightExpr = expression;
                     expression = null;
-                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
+                    
+                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
                 }
                 
                 expression = binExpr;
@@ -545,14 +545,14 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitShiftExpr(ctx.args.get(0));
                 Expression leftExpr = expression;
                 expression = null;
-                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
                     String opString = ctx.ops.get(i-1).getText();
-                    visitShiftExpr(ctx.args.get(i));
                     BinaryOperator op = new BinaryOperator(BinaryOperatorType.findBySsaForm(opString));
+                    visitShiftExpr(ctx.args.get(i));
                     Expression rightExpr = expression;
                     expression = null;
-                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
+                    
+                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
                 }
                 
                 expression = binExpr;
@@ -571,14 +571,14 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitAddExpr(ctx.args.get(0));
                 Expression leftExpr = expression;
                 expression = null;
-                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
                     String opString = ctx.ops.get(i-1).getText();
-                    visitAddExpr(ctx.args.get(i));
                     BinaryOperator op = new BinaryOperator(BinaryOperatorType.findBySsaForm(opString));
+                    visitAddExpr(ctx.args.get(i));
                     Expression rightExpr = expression;
                     expression = null;
-                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
+                    
+                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
                 }
                 
                 expression = binExpr;
@@ -597,14 +597,14 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitMulExpr(ctx.args.get(0));
                 Expression leftExpr = expression;
                 expression = null;
-                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
                     String opString = ctx.ops.get(i-1).getText();
-                    visitMulExpr(ctx.args.get(i));
                     BinaryOperator op = new BinaryOperator(BinaryOperatorType.findBySsaForm(opString));
+                    visitMulExpr(ctx.args.get(i));
                     Expression rightExpr = expression;
                     expression = null;
-                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
+                    
+                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
                 }
                 
                 expression = binExpr;
@@ -624,14 +624,14 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitUnaryExpr(ctx.args.get(0));
                 Expression leftExpr = expression;
                 expression = null;
-                binExpr = new BinaryExpression(leftExpr);
                 for(int i = 1; i < ctx.args.size(); i++){
                     String opString = ctx.ops.get(i-1).getText();
-                    visitUnaryExpr(ctx.args.get(i));
                     BinaryOperator op = new BinaryOperator(BinaryOperatorType.findBySsaForm(opString));
+                    visitUnaryExpr(ctx.args.get(i));
                     Expression rightExpr = expression;
                     expression = null;
-                    binExpr.addRemainingExpr(new Tuple(op, rightExpr));
+                    
+                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
                 }
                 
                 expression = binExpr;
