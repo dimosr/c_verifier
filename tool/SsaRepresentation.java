@@ -189,19 +189,35 @@ public class SsaRepresentation {
         if(expression.getType() == ExpressionType.BINARY){
             BinaryExpression binExpr = (BinaryExpression) expression;
             if(binExpr.operator.opType.isNumInputNumOutput()) {
-                smtFormula.insert(0, "(" + operatorType.smtForm() + " ");
-                smtFormula.append(getExpressionSMT(tuple.second)).append(")");
-                    
-            }
-            else if(operatorType.isNumInputBoolOutput()){
-                smtFormula.append("(tobv ");
-                smtFormula.append("(" + operatorType.smtForm() + " ");
-                smtFormula.append(getExpressionSMT(tuple.second)).append(")");
+                smtFormula.append("(").append(binExpr.operator.opType.smtForm()).append(" ");
+                smtFormula.append(getExpressionSMT(binExpr.leftExpr)).append(" ");
+                smtFormula.append(getExpressionSMT(binExpr.rightExpr)).append(" ");
                 smtFormula.append(")");
             }
-            else if(operatorType.isBoolInputBoolOutput()){
-                smtFormula.insert(0, "(" + operatorType.smtForm() + " ");
-                smtFormula.append(getExpressionSMT(tuple.second)).append(")");
+            else if(binExpr.operator.opType.isNumInputBoolOutput()){
+                smtFormula.append("(tobv32 ");
+                
+                smtFormula.append("(").append(binExpr.operator.opType.smtForm()).append(" ");
+                smtFormula.append(getExpressionSMT(binExpr.leftExpr)).append(" ");
+                smtFormula.append(getExpressionSMT(binExpr.rightExpr)).append(" ");
+                smtFormula.append(")");
+                
+                smtFormula.append(")");
+            }
+            else if(binExpr.operator.opType.isBoolInputBoolOutput()){
+                smtFormula.append("(tobv32 ");
+                
+                smtFormula.append("(").append(binExpr.operator.opType.smtForm()).append(" ");
+                
+                smtFormula.append("(tobool ");
+                smtFormula.append("(").append(getExpressionSMT(binExpr.leftExpr)).append(")");
+                smtFormula.append(" )");
+                
+                smtFormula.append("(tobool ");
+                smtFormula.append("(").append(getExpressionSMT(binExpr.rightExpr)).append(")");
+                smtFormula.append(" )");
+                
+                smtFormula.append(")");
             }
             
         }
@@ -217,12 +233,8 @@ public class SsaRepresentation {
             smtFormula.append("( ").append(getExpressionSMT(parenExpr.expr)).append(" )");
         }
         else if(expression.getType() == ExpressionType.TERNARY) {
-            //TernaryExpression ternaryExpr = (TernaryExpression) expression;
-            //smtFormula.append("ite ").append(getExpressionSMT(ternaryExpr.conditionalExpression));
-            
-            /*for(Tuple<Expression, Expression> tuple : ternaryExpr.remainingExpr) {
-                smtFormula.append(getExpressionSMT(tuple.first)).append(" ").append(getExpressionSMT(tuple.second));
-            }*/
+            TernaryExpression ternExpr = (TernaryExpression) expression;
+            smtFormula.append("(ite ").append("(tobool (").append(getExpressionSMT(ternExpr.condExpr)).append(") ) ").append(getExpressionSMT(ternExpr.ifExpr)).append(" ").append(getExpressionSMT(ternExpr.elseExpr)).append(")");
         }
         else if(expression.getType() == ExpressionType.UNARY) {
             UnaryExpression unaryExpr = (UnaryExpression) expression;

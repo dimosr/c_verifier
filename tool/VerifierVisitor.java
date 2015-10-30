@@ -257,7 +257,7 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 String ifVariable = variable + mapping1.get(variable);
                 String elseVariable = variable + mapping2.get(variable);
                 
-                TernaryExpression assignmentExpression = new TernaryExpression(newPredicate, new VarRefExpression(ifVariable), new VarRefExpression(elseVariable), false) ;
+                TernaryExpression assignmentExpression = new TernaryExpression(newPredicate, new VarRefExpression(ifVariable), new VarRefExpression(elseVariable)) ;
                 Assignment branchResolutionAssignment = new Assignment(finalVariable, assignmentExpression);
                 
                 ssa.addAssignment(branchResolutionAssignment);
@@ -367,21 +367,20 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                     visitLorExpr(ctx.args.get(2));
                     Expression elseExpr = expression;
                     
-                    ternaryExpression = new TernaryExpression(condExpr, ifExpr, elseExpr, false);
+                    ternaryExpression = new TernaryExpression(condExpr, ifExpr, elseExpr);
                 }
                 else {
                     long elementsSum = ctx.args.size();
-                    visitLorExpr(ctx.args.get((int) (elementsSum - 2) ));
+                    visitLorExpr(ctx.args.get(0));
+                    Expression condExpr = expression;
+                    visitLorExpr(ctx.args.get(1));
                     Expression ifExpr = expression;
-                    visitLorExpr(ctx.args.get((int) (elementsSum - 1) ));
-                    Expression elseExpr = expression;
-                    
-                    List<LorExprContext> sublist = ctx.args.subList(0, (int) elementsSum - 2);
+                    List<LorExprContext> sublist = ctx.args.subList(2, (int) elementsSum);
                     ctx.args = sublist;
                     visitTernExpr(ctx);
-                    Expression complexCondExpr = expression;
+                    Expression elseExpr = expression;
                     
-                    ternaryExpression = new TernaryExpression(complexCondExpr, ifExpr, elseExpr, true);
+                    ternaryExpression = new TernaryExpression(condExpr, ifExpr, elseExpr);
                 }
                 expression = ternaryExpression;
             }
