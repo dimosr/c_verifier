@@ -146,7 +146,7 @@ public class SsaRepresentation {
         if(expression.getType() == ExpressionType.BINARY){
             BinaryExpression binExpr = (BinaryExpression) expression;
             ssaFormula.append(getExpressionSsa(binExpr.leftExpr)).append(" ");
-            ssaFormula.append(binExpr.operator.operator.ssaForm()).append(" ");
+            ssaFormula.append(binExpr.operator.opType.ssaForm()).append(" ");
             ssaFormula.append(getExpressionSsa(binExpr.rightExpr));
         }
         else if(expression.getType() == ExpressionType.CONSTANT) {
@@ -171,7 +171,7 @@ public class SsaRepresentation {
             UnaryExpression unaryExpr = (UnaryExpression) expression;
             
             for(UnaryOperator operator : unaryExpr.operators) {
-                ssaFormula.append(operator.operator.ssaForm()).append(" ");
+                ssaFormula.append(operator.opType.ssaForm()).append(" ");
             }
             ssaFormula.append(getExpressionSsa(unaryExpr.expr));
         }
@@ -188,28 +188,22 @@ public class SsaRepresentation {
         
         if(expression.getType() == ExpressionType.BINARY){
             BinaryExpression binExpr = (BinaryExpression) expression;
-            StringBuilder operatorBuilder = new StringBuilder();
-            smtFormula.append(getExpressionSMT(binExpr.leftExpr)).append(" ");
-            long parenthesesSum = 0;
-            
-            /*for(Tuple<BinaryOperator, Expression> tuple : binExpr.remainingExpr) {
-                BinaryOperatorType operatorType = tuple.first.operator;
-                if(operatorType.isNumInputNumOutput()) {
-                    smtFormula.insert(0, "(" + operatorType.smtForm() + " ");
-                    smtFormula.append(getExpressionSMT(tuple.second)).append(")");
+            if(binExpr.operator.opType.isNumInputNumOutput()) {
+                smtFormula.insert(0, "(" + operatorType.smtForm() + " ");
+                smtFormula.append(getExpressionSMT(tuple.second)).append(")");
                     
-                }
-                else if(operatorType.isNumInputBoolOutput()){
-                    smtFormula.append("(tobv ");
-                    smtFormula.append("(" + operatorType.smtForm() + " ");
-                    smtFormula.append(getExpressionSMT(tuple.second)).append(")");
-                    smtFormula.append(")");
-                }
-                else if(operatorType.isBoolInputBoolOutput()){
-                    smtFormula.insert(0, "(" + operatorType.smtForm() + " ");
-                    smtFormula.append(getExpressionSMT(tuple.second)).append(")");
-                }
-            }*/
+            }
+            else if(operatorType.isNumInputBoolOutput()){
+                smtFormula.append("(tobv ");
+                smtFormula.append("(" + operatorType.smtForm() + " ");
+                smtFormula.append(getExpressionSMT(tuple.second)).append(")");
+                smtFormula.append(")");
+            }
+            else if(operatorType.isBoolInputBoolOutput()){
+                smtFormula.insert(0, "(" + operatorType.smtForm() + " ");
+                smtFormula.append(getExpressionSMT(tuple.second)).append(")");
+            }
+            
         }
         else if(expression.getType() == ExpressionType.CONSTANT) {
             ConstantExpression constExpr = (ConstantExpression) expression;
@@ -235,12 +229,12 @@ public class SsaRepresentation {
             long parenthesesSum = 0;
             
             for(UnaryOperator operator : unaryExpr.operators) {
-                if((operator.operator == UnaryOperatorType.PLUS) || (operator.operator == UnaryOperatorType.MINUS)){
-                    smtFormula.append("(").append(operator.operator.smtForm());
+                if((operator.opType == UnaryOperatorType.PLUS) || (operator.opType == UnaryOperatorType.MINUS)){
+                    smtFormula.append("(").append(operator.opType.smtForm());
                     parenthesesSum++;
                 }
                 else {
-                    smtFormula.append("(tobv32 (").append(operator.operator.smtForm()).append(" (tobool ");
+                    smtFormula.append("(tobv32 (").append(operator.opType.smtForm()).append(" (tobool ");
                     parenthesesSum += 3;
                 }
                 smtFormula.append(" ");

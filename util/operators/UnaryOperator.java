@@ -2,10 +2,10 @@ package util.operators;
 
 public class UnaryOperator extends Operator {
     
-   public UnaryOperatorType operator; 
+   public UnaryOperatorType opType; 
    
    public UnaryOperator(UnaryOperatorType operator) {
-       this.operator = operator;
+       this.opType = operator;
    }
    
    public OperatorType getType() {

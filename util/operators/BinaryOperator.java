@@ -2,10 +2,10 @@ package util.operators;
 
 public class BinaryOperator extends Operator {
     
-    public BinaryOperatorType operator;
+    public BinaryOperatorType opType;
     
     public BinaryOperator(BinaryOperatorType operator) {
-        this.operator = operator;
+        this.opType = operator;
     }
     
     public OperatorType getType() {
