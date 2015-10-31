@@ -307,8 +307,6 @@ public class SsaRepresentation {
                     divOperands.add(binExpr.rightExpr);
             }
             else if(binExpr.operator.opType.isNumInputBoolOutput()){
-                smtFormula.append("(tobv32 ");
-                
                 if(binExpr.operator.opType == BinaryOperatorType.NOT_EQUALS) {      //specific case, not_equals requires 2 symbols in SMT
                     smtFormula.append("(not (= ");
                     smtFormula.append(getExpressionPseudoSMT(binExpr.leftExpr)).append(" ");
@@ -321,8 +319,6 @@ public class SsaRepresentation {
                     smtFormula.append(getExpressionPseudoSMT(binExpr.rightExpr)).append(" ");
                     smtFormula.append(")");
                 }
-                
-                smtFormula.append(")");
             }
             else if(binExpr.operator.opType.isBoolInputBoolOutput()){
                 smtFormula.append("(").append(binExpr.operator.opType.smtForm()).append(" ");         
@@ -354,10 +350,10 @@ public class SsaRepresentation {
                     smtFormula.append("(").append(operator.opType.smtForm());
                 }
                 else if( (operator.opType == UnaryOperatorType.NOT) || (operator.opType == UnaryOperatorType.BNOT) ){
-                    smtFormula.append("(tobv32 (").append(operator.opType.smtForm()).append(")");
+                    smtFormula.append("(").append(operator.opType.smtForm()).append(" ");
                 }
             }
-            smtFormula.append(getExpressionPseudoSMT(unaryExpr.expr));
+            smtFormula.append(getExpressionPseudoSMT(unaryExpr.expr)).append(")");
         }
         else if(expression.getType() == ExpressionType.VARIABLE_REFERENCE) {
             VarRefExpression varRefExpr = (VarRefExpression) expression;
