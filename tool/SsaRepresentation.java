@@ -131,7 +131,7 @@ public class SsaRepresentation {
         /**  assertions - MUST use prefix operators**/
         smtFormula.append("(assert (not (and \n");
         for(Assertion assertion : this.getAssertions()) { 
-            smtFormula.append(getExpressionSMT(assertion.expression));
+            smtFormula.append("(tobool ").append(getExpressionSMT(assertion.expression)).append(")");
             smtFormula.append("\n");
         }
         smtFormula.append("\n) ) )");
