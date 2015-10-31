@@ -33,10 +33,6 @@ public class VCGenerator {
                 try (PrintStream out = new PrintStream(new FileOutputStream("pseudo_smt.txt"))) {
                     out.print(ssa.translateToPseudoSmt(fresh));
                 }
-                // BAYAN
-                try (PrintStream out = new PrintStream(new FileOutputStream("smt_format.txt"))) {
-                    out.print(ssa.translateToSmtFormula(fresh));
-                }
                 
 		StringBuilder result = new StringBuilder("(set-logic QF_BV)\n");
 		result.append("(set-option :produce-models true)\n");
@@ -47,6 +43,11 @@ public class VCGenerator {
 		
 		result.append("\n(check-sat)\n");
                 System.out.println(result);
+                
+                try (PrintStream out = new PrintStream(new FileOutputStream("smt_format.txt"))) {
+                    out.print(result);
+                }
+                
 		return result;
 	}
 

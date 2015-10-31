@@ -120,22 +120,21 @@ public class SsaRepresentation {
       
         for(Assignment assignment : this.getAssignments()) {
             smtFormula.append("(assert (= ")
-                      .append(assignment.variableName).append(" (");
-            smtFormula.append(getExpressionSMT(assignment.expression)).append(")))");
+                      .append(assignment.variableName).append(" ");
+            smtFormula.append(getExpressionSMT(assignment.expression)).append("))");
             // fix last &&
-                 smtFormula.append(" && \n");
+                 smtFormula.append(" \n");
         }
 
         smtFormula.append("\n");
             
         /**  assertions - MUST use prefix operators**/
-        // BAYAN
-        smtFormula.append("(assert (not (and \n(");
-        for(Assertion assertion : this.getAssertions()) {
-            smtFormula.append(getExpressionSsa(assertion.expression));
-            smtFormula.append(") ");
+        smtFormula.append("(assert (not (and \n");
+        for(Assertion assertion : this.getAssertions()) { 
+            smtFormula.append(getExpressionSMT(assertion.expression));
+            smtFormula.append("\n");
         }
-        smtFormula.append(")))");
+        smtFormula.append("\n) ) )");
         
         return smtFormula.toString();
     }
@@ -191,8 +190,7 @@ public class SsaRepresentation {
             if(binExpr.operator.opType.isNumInputNumOutput()) {
                 smtFormula.append("(").append(binExpr.operator.opType.smtForm()).append(" ");
                 smtFormula.append(getExpressionSMT(binExpr.leftExpr)).append(" ");
-                smtFormula.append(getExpressionSMT(binExpr.rightExpr)).append(" ");
-                smtFormula.append(")");
+                smtFormula.append(getExpressionSMT(binExpr.rightExpr)).append(")");
             }
             else if(binExpr.operator.opType.isNumInputBoolOutput()){
                 smtFormula.append("(tobv32 ");
@@ -210,14 +208,14 @@ public class SsaRepresentation {
                 smtFormula.append("(").append(binExpr.operator.opType.smtForm()).append(" ");
                 
                 smtFormula.append("(tobool ");
-                smtFormula.append("(").append(getExpressionSMT(binExpr.leftExpr)).append(")");
+                smtFormula.append(getExpressionSMT(binExpr.leftExpr));
                 smtFormula.append(" )");
                 
                 smtFormula.append("(tobool ");
-                smtFormula.append("(").append(getExpressionSMT(binExpr.rightExpr)).append(")");
+                smtFormula.append(getExpressionSMT(binExpr.rightExpr));
                 smtFormula.append(" )");
                 
-                smtFormula.append(")");
+                smtFormula.append(") )");
             }
             
         }

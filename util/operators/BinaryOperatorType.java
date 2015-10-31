@@ -19,7 +19,7 @@ public enum BinaryOperatorType {
     MULT ("*", "bvmul"), 
     DIV ("/", "bvsdiv"), 
     MOD ("%", "bvsmod"),
-    IMPLIES ("==>", "implies");
+    IMPLIES ("==>", "=>");
 
     private final String ssaForm;
     private final String smtForm;
@@ -78,6 +78,7 @@ public enum BinaryOperatorType {
                this == BinaryOperatorType.LAND ||
                this == BinaryOperatorType.BOR ||
                this == BinaryOperatorType.BXOR ||
-               this == BinaryOperatorType.BAND);
+               this == BinaryOperatorType.BAND) ||
+               this == BinaryOperatorType.IMPLIES;
     }
 }
