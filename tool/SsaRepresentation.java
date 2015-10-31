@@ -158,8 +158,6 @@ public class SsaRepresentation {
             ssaFormula.append(getExpressionSsa(binExpr.leftExpr)).append(" ");
             ssaFormula.append(binExpr.operator.opType.ssaForm()).append(" ");
             ssaFormula.append(getExpressionSsa(binExpr.rightExpr));
-            if(binExpr.operator.opType == BinaryOperatorType.DIV)
-                divOperands.add(binExpr.rightExpr);
         }
         else if(expression.getType() == ExpressionType.CONSTANT) {
             ConstantExpression constExpr = (ConstantExpression) expression;
@@ -204,8 +202,8 @@ public class SsaRepresentation {
                 smtFormula.append("(").append(binExpr.operator.opType.smtForm()).append(" ");
                 smtFormula.append(getExpressionSMT(binExpr.leftExpr)).append(" ");
                 smtFormula.append(getExpressionSMT(binExpr.rightExpr)).append(")");
-                
-                
+                if(binExpr.operator.opType == BinaryOperatorType.DIV)
+                    divOperands.add(binExpr.rightExpr);
             }
             else if(binExpr.operator.opType.isNumInputBoolOutput()){
                 smtFormula.append("(tobv32 ");
