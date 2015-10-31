@@ -86,7 +86,7 @@ public class SsaRepresentation {
     public String addZeroDivChecks() {
         StringBuilder divChecks = new StringBuilder();
         for(Expression divOperand : divOperands) {
-            divChecks.append("(assert (not (= ").append(getExpressionSMT(divOperand)).append("(_ bv0 32) ) ) ) \n");
+            divChecks.append("(assert (not (= ").append(getExpressionSMT(divOperand)).append(" (_ bv0 32) ) ) ) \n");
         }
         divOperands.clear();
         return divChecks.toString();
