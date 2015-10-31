@@ -236,7 +236,7 @@ public class SsaRepresentation {
         }
         else if(expression.getType() == ExpressionType.PARENTHESIS){
             ParenthesisExpression parenExpr = (ParenthesisExpression) expression;
-            smtFormula.append("( ").append(getExpressionSMT(parenExpr.expr)).append(" )");
+            smtFormula.append(getExpressionSMT(parenExpr.expr));
         }
         else if(expression.getType() == ExpressionType.TERNARY) {
             TernaryExpression ternExpr = (TernaryExpression) expression;
