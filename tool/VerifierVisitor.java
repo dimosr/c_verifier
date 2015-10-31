@@ -51,7 +51,6 @@ import util.assignments.Assignment;
 import util.expressions.BinaryExpression;
 import util.expressions.ConstantExpression;
 import util.expressions.Expression;
-import util.expressions.OldExpression;
 import util.expressions.ParenthesisExpression;
 import util.expressions.TernaryExpression;
 import util.expressions.UnaryExpression;
@@ -82,17 +81,17 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         private Expression expression;
         
-        private Map<String, Integer> mapping;
+        private VariablesMapping mapping;
         
         private Expression predicate;
         
-        private Set<String> modSet;
+        private ModifiedSet modSet;
         
         private Expression assumption;
         
-        private boolean executePreConditions;
+        private boolean nonSummarizationPreConditions;
         
-        private boolean executePostConditions;
+        private boolean nonSummarizationPostConditions;
         
         Expression returnExpression;
         
@@ -112,11 +111,11 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
 	public Void visitProcedureDecl(ProcedureDeclContext ctx) {
             fresh = new FreshStructure();
             ssa = new SsaRepresentation();
-            Map<String, Integer> currentMapping = new HashMap<String, Integer>();
+            VariablesMapping currentMapping = new VariablesMapping();
             mapping = currentMapping;
             Expression initialPredicate = new ConstantExpression("1");    //true
             predicate = initialPredicate;
-            modSet = new HashSet<String>();
+            modSet = new ModifiedSet();
             Expression initialAssumption = new ConstantExpression("1");    //true
             assumption = initialAssumption;
             
@@ -124,8 +123,8 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             actualProcedures.put(name, ctx.formals.size());
             
             for(String globalVar : globals) {
-                fresh.addNewVar(globalVar);
-                currentMapping.put(globalVar, 0);
+                fresh.addNewGlobal(globalVar);
+                currentMapping.addNewGlobal(globalVar);
             }
             
             parameters = new HashSet<>();
@@ -133,15 +132,15 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             for(FormalParamContext fp : ctx.formals) {
 		String formalParamName = fp.ident.name.getText();
 		parameters.add(formalParamName);
-                fresh.addNewVar(formalParamName);
-                currentMapping.put(formalParamName, 0);
+                fresh.addNewLocal(formalParamName);
+                currentMapping.addNewLocal(formalParamName);
             }
             
+            nonSummarizationPreConditions = true;
             for(PrepostContext preOrPostCondition : ctx.contract){
-                executePreConditions = true;
                 super.visitPrepost(preOrPostCondition);
-                executePreConditions = false;
             }
+            nonSummarizationPreConditions = false;
             
             for(SimpleCParser.StmtContext statementCtx : ctx.stmts) {
                 visitStmt(statementCtx);
@@ -150,22 +149,23 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             super.visitExpr(ctx.returnExpr);
             returnExpression = expression;
             
+            nonSummarizationPostConditions = true;
             for(PrepostContext preOrPostCondition : ctx.contract){
-                executePostConditions = true;
                 super.visitPrepost(preOrPostCondition);
-                executePostConditions = false;
             }
+            nonSummarizationPostConditions = false;
             
             popLocalsStack();
             parameters = null;
             return null;
 	}
         
+        //this method will only be called for local variables!!
         @Override
 	public Void visitVarDecl(VarDeclContext ctx) {
 		String name = ctx.ident.name.getText();
-                fresh.addNewVar(name);
-                mapping.put(name, 0);
+                fresh.addNewLocal(name);
+                mapping.addNewLocal(name);
 		
 		peekLocalsStack().add(name);
 		return null;
@@ -191,15 +191,24 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
 	public Void visitAssignStmt(AssignStmtContext ctx) {
             String variableName = ctx.lhs.ident.name.getText();
             Integer newValue = fresh.fresh(variableName);
-            String ssaVariableName = variableName + newValue;
+            String ssaVariableName = null;
+            if(mapping.isLocal(variableName)){
+                ssaVariableName = variableName + newValue;
+                modSet.addLocal(variableName);
+            }
+            else if(mapping.isGlobal(variableName)){
+                ssaVariableName = "G__" + variableName + newValue;
+                modSet.addGlobal(variableName);
+            }
+            
             
             super.visitExpr(ctx.rhs);
             Assignment assignment = new Assignment(ssaVariableName, expression);
             ssa.addAssignment(assignment);
             
-            modSet.add(variableName);
+            
 
-            mapping.put(variableName, newValue);        
+            mapping.updateExistingVar(variableName, newValue);        
             expression = null;
             return null;
 	}
@@ -207,55 +216,61 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         @Override
         public Void visitIfStmt(IfStmtContext ctx) {
             Expression currentPredicate = predicate;
-            Map<String, Integer> currentMapping = mapping;
-            Set<String> currentModSet = modSet;
+            VariablesMapping currentMapping = mapping;
+            ModifiedSet currentModSet = modSet;
             
             visitExpr(ctx.condition);
             Expression newPredicate = expression;
             
-            
-            Map<String, Integer> mapping1 = new HashMap<String, Integer>(currentMapping);
-            Map<String, Integer> mapping2 = new HashMap<String, Integer>(currentMapping);
+            VariablesMapping mapping1 = currentMapping.deepClone();
+            VariablesMapping mapping2 = currentMapping.deepClone();
             
             BinaryExpression predicate1 = new BinaryExpression(predicate, new BinaryOperator(BinaryOperatorType.LAND), newPredicate);       //Pred && NewPred
             BinaryExpression predicate2 = new BinaryExpression(predicate,   new BinaryOperator(BinaryOperatorType.LAND)   ,    new UnaryExpression(new UnaryOperator(UnaryOperatorType.NOT), newPredicate)    );        //Pred && ! (NewPred)
 
             predicate = predicate1;
             mapping = mapping1;
-            modSet = new HashSet<String>();
+            modSet = new ModifiedSet();
             super.visitBlockStmt(ctx.thenBlock);
             mapping1 = mapping;
-            Set<String> modSet1 = modSet;
+            ModifiedSet modSet1 = modSet;
             
-            Set<String> modSet2 = null;
+            ModifiedSet modSet2 = null;
             if(ctx.elseBlock != null) {
                 predicate = predicate2;
                 mapping = mapping2;
-                modSet = new HashSet<String>();
+                modSet = new ModifiedSet();
                 super.visitBlockStmt(ctx.elseBlock);
                 mapping2 = mapping;
                 modSet2 = modSet;
             }
             
-            Set<String> union = new HashSet<String>();
-            for(String variable : modSet1) {
-                union.add(variable);
-            }
-            if(ctx.elseBlock != null) {
-                for(String variable : modSet2) {
-                    union.add(variable);
-                }
-            }
+            ModifiedSet unionSet = modSet1.union(modSet2);
             
-            for(String variable : union) {
-                currentModSet.add(variable);
+            for(String variable : unionSet.getLocalsModified()) {
+                currentModSet.addLocal(variable);
                 
                 Integer freshIndex = fresh.fresh(variable);
-                currentMapping.put(variable, freshIndex);
+                currentMapping.updateExistingVar(variable, freshIndex);
                 String finalVariable = variable + freshIndex;
-
-                String ifVariable = variable + mapping1.get(variable);
-                String elseVariable = variable + mapping2.get(variable);
+                
+                String ifVariable = variable + mapping1.getVarIndex(variable);
+                String elseVariable = variable + mapping2.getVarIndex(variable);
+                
+                TernaryExpression assignmentExpression = new TernaryExpression(newPredicate, new VarRefExpression(ifVariable), new VarRefExpression(elseVariable)) ;
+                Assignment branchResolutionAssignment = new Assignment(finalVariable, assignmentExpression);
+                
+                ssa.addAssignment(branchResolutionAssignment);
+            }
+            for(String variable : unionSet.getGlobalsModified()) {
+                currentModSet.addGlobal(variable);
+                
+                Integer freshIndex = fresh.fresh(variable);
+                currentMapping.updateExistingVar(variable, freshIndex);
+                String finalVariable = "G__" + variable + freshIndex;
+                
+                String ifVariable = "G__" + variable + mapping1.getVarIndex(variable);
+                String elseVariable = "G__" + variable + mapping2.getVarIndex(variable);
                 
                 TernaryExpression assignmentExpression = new TernaryExpression(newPredicate, new VarRefExpression(ifVariable), new VarRefExpression(elseVariable)) ;
                 Assignment branchResolutionAssignment = new Assignment(finalVariable, assignmentExpression);
@@ -332,7 +347,7 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         @Override
         public Void visitRequires(RequiresContext ctx) {
-            if(executePreConditions) {
+            if(nonSummarizationPreConditions) {
                 visitExpr(ctx.condition);
                 return executeAssumeExpression(expression);
             }
@@ -341,7 +356,7 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         @Override
         public Void visitEnsures(EnsuresContext ctx) {
-            if(executePostConditions) {
+            if(nonSummarizationPostConditions) {
                 visitExpr(ctx.condition);
                 return executeAssertionExpression(expression);
             }
@@ -680,8 +695,13 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         @Override
 	public Void visitVarrefExpr(VarrefExprContext ctx) {
             String variableName = ctx.var.ident.name.getText();
-            Integer variableIndex = mapping.get(variableName);
-            String variableSsaName = variableName + variableIndex;
+            Integer variableIndex = mapping.getVarIndex(variableName);
+            String variableSsaName = null;
+            if(mapping.isLocal(variableName))        
+                variableSsaName = variableName + variableIndex;
+            else if(mapping.isGlobal(variableName)) {
+                variableSsaName = "G__" + variableName + variableIndex;
+            }
             VarRefExpression varRefExpr = new VarRefExpression(variableSsaName);
             expression = varRefExpr;
             return null;
@@ -707,7 +727,16 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         @Override
         public Void visitOldExpr(OldExprContext ctx) {
             String variableName = ctx.arg.ident.name.getText();
-            OldExpression oldExpr = new OldExpression(variableName);
+            VarRefExpression oldExpr = null;
+            if(nonSummarizationPreConditions){
+                String ssaVariableName = "G__" + variableName + "0";
+                oldExpr = new VarRefExpression(ssaVariableName);
+            }
+            else if(nonSummarizationPostConditions){
+                String ssaVariableName = "G__" + variableName + mapping.getGlobalIndex(variableName);
+                oldExpr = new VarRefExpression(ssaVariableName);
+            }
+            expression = oldExpr;
             return null;
         }
         

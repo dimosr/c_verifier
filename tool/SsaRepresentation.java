@@ -55,9 +55,16 @@ public class SsaRepresentation {
         StringBuilder ssaFormula = new StringBuilder();
             
         /**  variables declarations  **/
-        Map<String, Integer> freshMapping = fresh.getAllVariablesMappings();
-        for(String variableName : freshMapping.keySet() ) {
-            Integer biggestIndex = freshMapping.get(variableName);
+        Map<String, Integer> globalFreshMapping = fresh.getAllGlobalMappings();
+        for(String variableName : globalFreshMapping.keySet() ) {
+            Integer biggestIndex = globalFreshMapping.get(variableName);
+            for(int i = 0; i <= biggestIndex; i++) {
+                ssaFormula.append("int ").append("G__").append(variableName).append(i).append("; \n");
+            }
+        }
+        Map<String, Integer> localFreshMapping = fresh.getAllLocalMappings();
+        for(String variableName : localFreshMapping.keySet() ) {
+            Integer biggestIndex = localFreshMapping.get(variableName);
             for(int i = 0; i <= biggestIndex; i++) {
                 ssaFormula.append("int ").append(variableName).append(i).append("; \n");
             }
@@ -96,9 +103,15 @@ public class SsaRepresentation {
         StringBuilder smtFormula = new StringBuilder();
         
         /**  variables declarations  **/
-        Map<String, Integer> freshMapping = fresh.getAllVariablesMappings();
-        for(String variableName : freshMapping.keySet() ) {
-            for(int i = 0; i <= freshMapping.get(variableName); i++) {
+        Map<String, Integer> globalFreshMapping = fresh.getAllGlobalMappings();
+        for(String variableName : globalFreshMapping.keySet() ) {
+            for(int i = 0; i <= globalFreshMapping.get(variableName); i++) {
+                smtFormula.append("(declare-fun ").append("G__").append(variableName).append(i).append(" () (_ BitVec 32)) \n");
+            }
+        }
+        Map<String, Integer> localFreshMapping = fresh.getAllLocalMappings();
+        for(String variableName : localFreshMapping.keySet() ) {
+            for(int i = 0; i <= localFreshMapping.get(variableName); i++) {
                 smtFormula.append("(declare-fun ").append(variableName).append(i).append(" () (_ BitVec 32)) \n");
             }
         }
@@ -138,9 +151,6 @@ public class SsaRepresentation {
         else if(expression.getType() == ExpressionType.CONSTANT) {
             ConstantExpression constExpr = (ConstantExpression) expression;
             ssaFormula.append(constExpr.intValue);
-        }
-        else if(expression.getType() == ExpressionType.OLD) {
-            // TO DO
         }
         else if(expression.getType() == ExpressionType.PARENTHESIS){
             ParenthesisExpression parenExpr = (ParenthesisExpression) expression;
@@ -220,9 +230,6 @@ public class SsaRepresentation {
             ConstantExpression constExpr = (ConstantExpression) expression;
             smtFormula.append("(_ bv").append(constExpr.intValue).append(" 32)");
         }
-        else if(expression.getType() == ExpressionType.OLD) {
-            // TO DO
-        }
         else if(expression.getType() == ExpressionType.PARENTHESIS){
             ParenthesisExpression parenExpr = (ParenthesisExpression) expression;
             smtFormula.append(getExpressionSMT(parenExpr.expr));
@@ -263,9 +270,15 @@ public class SsaRepresentation {
         StringBuilder smtFormula = new StringBuilder();
         
         /**  variables declarations  **/
-        Map<String, Integer> freshMapping = fresh.getAllVariablesMappings();
-        for(String variableName : freshMapping.keySet() ) {
-            for(int i = 0; i <= freshMapping.get(variableName); i++) {
+        Map<String, Integer> globalFreshMapping = fresh.getAllGlobalMappings();
+        for(String variableName : globalFreshMapping.keySet() ) {
+            for(int i = 0; i <= globalFreshMapping.get(variableName); i++) {
+                smtFormula.append("(declare-fun ").append("G__").append(variableName).append(i).append(" () (_ BitVec 32)) \n");
+            }
+        }
+        Map<String, Integer> localFreshMapping = fresh.getAllLocalMappings();
+        for(String variableName : localFreshMapping.keySet() ) {
+            for(int i = 0; i <= localFreshMapping.get(variableName); i++) {
                 smtFormula.append("(declare-fun ").append(variableName).append(i).append(" () (_ BitVec 32)) \n");
             }
         }
@@ -330,9 +343,6 @@ public class SsaRepresentation {
         else if(expression.getType() == ExpressionType.CONSTANT) {
             ConstantExpression constExpr = (ConstantExpression) expression;
             smtFormula.append("(_ bv").append(constExpr.intValue).append(" 32)");
-        }
-        else if(expression.getType() == ExpressionType.OLD) {
-            // TO DO
         }
         else if(expression.getType() == ExpressionType.PARENTHESIS){
             ParenthesisExpression parenExpr = (ParenthesisExpression) expression;
