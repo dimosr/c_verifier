@@ -2,6 +2,7 @@ package tool;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,9 +27,12 @@ public class SsaRepresentation {
     private List<Assignment> assignments;
     private List<Assertion> assertions;
     
+    private Set<Expression> divOperands;
+    
     public SsaRepresentation() {
         assignments = new ArrayList();
         assertions = new ArrayList();
+        divOperands = new HashSet<Expression>();
     }
     
     public void addAssertion(Assertion assertion) {
@@ -79,6 +83,15 @@ public class SsaRepresentation {
         return ssaFormula.toString();
     }
     
+    public String addZeroDivChecks() {
+        StringBuilder divChecks = new StringBuilder();
+        for(Expression divOperand : divOperands) {
+            divChecks.append("(assert (not (= ").append(getExpressionSMT(divOperand)).append("(_ bv0 32) ) ) ) \n");
+        }
+        divOperands.clear();
+        return divChecks.toString();
+    }
+    
     public String translateToPseudoSmt(FreshStructure fresh){
         StringBuilder pseudoSMT = new StringBuilder();
         
@@ -116,14 +129,12 @@ public class SsaRepresentation {
         
         smtFormula.append("\n");
         
-        /**   assignments - MUST use prefix operators **/
-      
+        /**   assignments - MUST use prefix operators **/    
         for(Assignment assignment : this.getAssignments()) {
             smtFormula.append("(assert (= ")
                       .append(assignment.variableName).append(" ");
-            smtFormula.append(getExpressionSMT(assignment.expression)).append("))");
-            // fix last &&
-                 smtFormula.append(" \n");
+            smtFormula.append(getExpressionSMT(assignment.expression)).append("))\n");
+            smtFormula.append(addZeroDivChecks());
         }
 
         smtFormula.append("\n");
@@ -131,8 +142,8 @@ public class SsaRepresentation {
         /**  assertions - MUST use prefix operators**/
         smtFormula.append("(assert (not (and \n");
         for(Assertion assertion : this.getAssertions()) { 
-            smtFormula.append("(tobool ").append(getExpressionSMT(assertion.expression)).append(")");
-            smtFormula.append("\n");
+            smtFormula.append("(tobool ").append(getExpressionSMT(assertion.expression)).append(")\n");
+            smtFormula.append(addZeroDivChecks());
         }
         smtFormula.append("\n) ) )");
         
@@ -147,6 +158,8 @@ public class SsaRepresentation {
             ssaFormula.append(getExpressionSsa(binExpr.leftExpr)).append(" ");
             ssaFormula.append(binExpr.operator.opType.ssaForm()).append(" ");
             ssaFormula.append(getExpressionSsa(binExpr.rightExpr));
+            if(binExpr.operator.opType == BinaryOperatorType.DIV)
+                divOperands.add(binExpr.rightExpr);
         }
         else if(expression.getType() == ExpressionType.CONSTANT) {
             ConstantExpression constExpr = (ConstantExpression) expression;
@@ -191,6 +204,8 @@ public class SsaRepresentation {
                 smtFormula.append("(").append(binExpr.operator.opType.smtForm()).append(" ");
                 smtFormula.append(getExpressionSMT(binExpr.leftExpr)).append(" ");
                 smtFormula.append(getExpressionSMT(binExpr.rightExpr)).append(")");
+                
+                
             }
             else if(binExpr.operator.opType.isNumInputBoolOutput()){
                 smtFormula.append("(tobv32 ");
