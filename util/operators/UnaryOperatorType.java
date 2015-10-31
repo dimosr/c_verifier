@@ -2,7 +2,7 @@ package util.operators;
 
 public enum UnaryOperatorType {
     PLUS ("+", "+"), 
-    MINUS ("-", "-"), 
+    MINUS ("-", "bvneg"), 
     NOT ("!", "not"), 
     BNOT ("~", "bvnot");
     

@@ -247,11 +247,11 @@ public class SsaRepresentation {
             long parenthesesSum = 0;
             
             for(UnaryOperator operator : unaryExpr.operators) {
-                if((operator.opType == UnaryOperatorType.PLUS) || (operator.opType == UnaryOperatorType.MINUS)){
+                if(operator.opType == UnaryOperatorType.MINUS){     // unary + can be omitted (optimization)
                     smtFormula.append("(").append(operator.opType.smtForm());
                     parenthesesSum++;
                 }
-                else {
+                else if( (operator.opType == UnaryOperatorType.NOT) || (operator.opType == UnaryOperatorType.BNOT) ){
                     smtFormula.append("(tobv32 (").append(operator.opType.smtForm()).append(" (tobool ");
                     parenthesesSum += 3;
                 }
