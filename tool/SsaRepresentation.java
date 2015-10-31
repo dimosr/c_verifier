@@ -195,10 +195,18 @@ public class SsaRepresentation {
             else if(binExpr.operator.opType.isNumInputBoolOutput()){
                 smtFormula.append("(tobv32 ");
                 
-                smtFormula.append("(").append(binExpr.operator.opType.smtForm()).append(" ");
-                smtFormula.append(getExpressionSMT(binExpr.leftExpr)).append(" ");
-                smtFormula.append(getExpressionSMT(binExpr.rightExpr)).append(" ");
-                smtFormula.append(")");
+                if(binExpr.operator.opType == BinaryOperatorType.NOT_EQUALS) {      //specific case, not_equals requires 2 symbols in SMT
+                    smtFormula.append("(not (= ");
+                    smtFormula.append(getExpressionSMT(binExpr.leftExpr)).append(" ");
+                    smtFormula.append(getExpressionSMT(binExpr.rightExpr)).append(" ");
+                    smtFormula.append(") )");
+                }
+                else{
+                    smtFormula.append("(").append(binExpr.operator.opType.smtForm()).append(" ");
+                    smtFormula.append(getExpressionSMT(binExpr.leftExpr)).append(" ");
+                    smtFormula.append(getExpressionSMT(binExpr.rightExpr)).append(" ");
+                    smtFormula.append(")");
+                }
                 
                 smtFormula.append(")");
             }
@@ -232,7 +240,7 @@ public class SsaRepresentation {
         }
         else if(expression.getType() == ExpressionType.TERNARY) {
             TernaryExpression ternExpr = (TernaryExpression) expression;
-            smtFormula.append("(ite ").append("(tobool (").append(getExpressionSMT(ternExpr.condExpr)).append(") ) ").append(getExpressionSMT(ternExpr.ifExpr)).append(" ").append(getExpressionSMT(ternExpr.elseExpr)).append(")");
+            smtFormula.append("(ite ").append("(tobool ").append(getExpressionSMT(ternExpr.condExpr)).append(") ").append(getExpressionSMT(ternExpr.ifExpr)).append(" ").append(getExpressionSMT(ternExpr.elseExpr)).append(")");
         }
         else if(expression.getType() == ExpressionType.UNARY) {
             UnaryExpression unaryExpr = (UnaryExpression) expression;
