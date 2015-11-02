@@ -27,12 +27,9 @@ public class SsaRepresentation {
     private List<Assignment> assignments;
     private List<Assertion> assertions;
     
-    private Set<Expression> divOperands;
-    
     public SsaRepresentation() {
         assignments = new ArrayList();
         assertions = new ArrayList();
-        divOperands = new HashSet<Expression>();
     }
     
     public void addAssertion(Assertion assertion) {
@@ -90,15 +87,6 @@ public class SsaRepresentation {
         return ssaFormula.toString();
     }
     
-    public String addZeroDivChecks() {
-        StringBuilder divChecks = new StringBuilder();
-        for(Expression divOperand : divOperands) {
-            divChecks.append("(assert (not (= ").append(getExpressionSMT(divOperand)).append(" (_ bv0 32) ) ) ) \n");
-        }
-        divOperands.clear();
-        return divChecks.toString();
-    }
-    
     public String translateToSmtFormula(FreshStructure fresh) {
         StringBuilder smtFormula = new StringBuilder();
         
@@ -123,7 +111,6 @@ public class SsaRepresentation {
             smtFormula.append("(assert (= ")
                       .append(assignment.variableName).append(" ");
             smtFormula.append(getExpressionSMT(assignment.expression)).append("))\n");
-            smtFormula.append(addZeroDivChecks());
         }
 
         smtFormula.append("\n");
@@ -132,7 +119,6 @@ public class SsaRepresentation {
         smtFormula.append("(assert (not (and \n");
         for(Assertion assertion : this.getAssertions()) { 
             smtFormula.append("(tobool ").append(getExpressionSMT(assertion.expression)).append(")\n");
-            smtFormula.append(addZeroDivChecks());
         }
         smtFormula.append("\n) ) )");
         
@@ -188,8 +174,6 @@ public class SsaRepresentation {
                 smtFormula.append("(").append(binExpr.operator.opType.smtForm()).append(" ");
                 smtFormula.append(getExpressionSMT(binExpr.leftExpr)).append(" ");
                 smtFormula.append(getExpressionSMT(binExpr.rightExpr)).append(")");
-                if(binExpr.operator.opType == BinaryOperatorType.DIV)
-                    divOperands.add(binExpr.rightExpr);
             }
             else if(binExpr.operator.opType.isNumInputBoolOutput()){
                 smtFormula.append("(tobv32 ");
@@ -290,7 +274,6 @@ public class SsaRepresentation {
             smtFormula.append("(assert (= ")
                       .append(assignment.variableName).append(" ");
             smtFormula.append(getExpressionPseudoSMT(assignment.expression)).append("))\n");
-            smtFormula.append(addZeroDivChecks());
         }
 
         smtFormula.append("\n");
@@ -299,7 +282,6 @@ public class SsaRepresentation {
         smtFormula.append("(assert (not (and \n");
         for(Assertion assertion : this.getAssertions()) { 
             smtFormula.append(getExpressionPseudoSMT(assertion.expression)).append("\n");
-            smtFormula.append(addZeroDivChecks());
         }
         smtFormula.append("\n) ) )");
         
@@ -316,8 +298,6 @@ public class SsaRepresentation {
                 smtFormula.append("(").append(binExpr.operator.opType.smtForm()).append(" ");
                 smtFormula.append(getExpressionPseudoSMT(binExpr.leftExpr)).append(" ");
                 smtFormula.append(getExpressionPseudoSMT(binExpr.rightExpr)).append(")");
-                if(binExpr.operator.opType == BinaryOperatorType.DIV)
-                    divOperands.add(binExpr.rightExpr);
             }
             else if(binExpr.operator.opType.isNumInputBoolOutput()){
                 if(binExpr.operator.opType == BinaryOperatorType.NOT_EQUALS) {      //specific case, not_equals requires 2 symbols in SMT

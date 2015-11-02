@@ -638,7 +638,7 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitUnaryExpr(ctx.single);
             }
             else {
-                BinaryExpression binExpr = null;
+                Expression binExpr = null;
                 
                 visitUnaryExpr(ctx.args.get(0));
                 Expression leftExpr = expression;
@@ -651,6 +651,14 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                     expression = null;
                     
                     binExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                    if(op.opType == BinaryOperatorType.DIV || op.opType == BinaryOperatorType.MOD) {
+                        BinaryExpression divExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                        BinaryExpression checkZeroExpr = new BinaryExpression(rightExpr, new BinaryOperator(BinaryOperatorType.EQUALS), new ConstantExpression("0"));
+                        binExpr = new TernaryExpression(checkZeroExpr, leftExpr, divExpr);
+                    }
+                    else{
+                        binExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                    }
                 }
                 
                 expression = binExpr;
