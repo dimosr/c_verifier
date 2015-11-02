@@ -42,7 +42,6 @@ public class VCGenerator {
                 result.append(ssa.translateToSmtFormula(fresh));
 		
 		result.append("\n(check-sat)\n");
-                System.out.println(result);
                 
                 try (PrintStream out = new PrintStream(new FileOutputStream("smt_format.txt"))) {
                     out.print(result);
