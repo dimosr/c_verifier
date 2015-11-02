@@ -585,7 +585,7 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 visitAddExpr(ctx.single);
             }
             else {
-                BinaryExpression binExpr = null;
+                Expression binExpr = null;
                 
                 visitAddExpr(ctx.args.get(0));
                 Expression leftExpr = expression;
@@ -598,6 +598,15 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                     expression = null;
                     
                     binExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                    if(op.opType == BinaryOperatorType.LEFT_SHIFT || op.opType == BinaryOperatorType.RIGHT_SHIFT) {
+                        BinaryExpression shiftExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                        BinaryExpression checkZeroExpr = new BinaryExpression(rightExpr, new BinaryOperator(BinaryOperatorType.GREATER), new ConstantExpression("32"));
+                        ParenthesisExpression parenthesisExpr = new ParenthesisExpression(new TernaryExpression(checkZeroExpr, new ConstantExpression("0"), shiftExpr));
+                        binExpr = parenthesisExpr;
+                    }
+                    else{
+                        binExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                    }
                 }
                 
                 expression = binExpr;
@@ -654,7 +663,8 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                     if(op.opType == BinaryOperatorType.DIV || op.opType == BinaryOperatorType.MOD) {
                         BinaryExpression divExpr = new BinaryExpression(leftExpr, op, rightExpr);
                         BinaryExpression checkZeroExpr = new BinaryExpression(rightExpr, new BinaryOperator(BinaryOperatorType.EQUALS), new ConstantExpression("0"));
-                        binExpr = new TernaryExpression(checkZeroExpr, leftExpr, divExpr);
+                        ParenthesisExpression parenthesisExpr = new ParenthesisExpression(new TernaryExpression(checkZeroExpr, leftExpr, divExpr));
+                        binExpr = parenthesisExpr;
                     }
                     else{
                         binExpr = new BinaryExpression(leftExpr, op, rightExpr);
