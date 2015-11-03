@@ -130,9 +130,9 @@ public class SsaRepresentation {
         
         if(expression.getType() == ExpressionType.BINARY){
             BinaryExpression binExpr = (BinaryExpression) expression;
-            ssaFormula.append(getExpressionSsa(binExpr.leftExpr)).append(" ");
+            ssaFormula.append("(").append(getExpressionSsa(binExpr.leftExpr)).append(" ");
             ssaFormula.append(binExpr.operator.opType.ssaForm()).append(" ");
-            ssaFormula.append(getExpressionSsa(binExpr.rightExpr));
+            ssaFormula.append(getExpressionSsa(binExpr.rightExpr)).append(")");
         }
         else if(expression.getType() == ExpressionType.CONSTANT) {
             ConstantExpression constExpr = (ConstantExpression) expression;
@@ -144,9 +144,9 @@ public class SsaRepresentation {
         }
         else if(expression.getType() == ExpressionType.TERNARY) {
             TernaryExpression ternaryExpr = (TernaryExpression) expression;
-            ssaFormula.append(getExpressionSsa(ternaryExpr.condExpr)).append(" ? ");
+            ssaFormula.append("(").append(getExpressionSsa(ternaryExpr.condExpr)).append(" ? ");
             ssaFormula.append(getExpressionSsa(ternaryExpr.ifExpr)).append(" : ");
-            ssaFormula.append(getExpressionSsa(ternaryExpr.elseExpr)).append(" ");
+            ssaFormula.append(getExpressionSsa(ternaryExpr.elseExpr)).append(" )");
             
         }
         else if(expression.getType() == ExpressionType.UNARY) {
