@@ -174,8 +174,8 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         public Void executeAssertionExpression(Expression expression) {
             Expression leftHandSide = new BinaryExpression(assumption, new BinaryOperator(BinaryOperatorType.LAND), predicate);
             BinaryExpression assertionExpr = new BinaryExpression(leftHandSide, new BinaryOperator(BinaryOperatorType.IMPLIES), expression);
-            Assertion assertion = new Assertion(assertionExpr);
             
+            Assertion assertion = new Assertion(assertionExpr);
             ssa.addAssertion(assertion);
             expression = null;
             return null;
@@ -199,15 +199,12 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             else if(mapping.isGlobal(variableName)){
                 ssaVariableName = "G__" + variableName + newValue;
                 modSet.addGlobal(variableName);
-            }
-            
+            }           
             
             super.visitExpr(ctx.rhs);
             Assignment assignment = new Assignment(ssaVariableName, expression);
             ssa.addAssignment(assignment);
-            
-            
-
+           
             mapping.updateExistingVar(variableName, newValue);        
             expression = null;
             return null;
@@ -327,13 +324,11 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
 	}
         
         public Void executeAssumeExpression(Expression expression) {
-            Expression previousAssumption = assumption;
-            
+            Expression previousAssumption = assumption;          
             Expression evaluatedExpression = expression;
-            expression = null;
             
-            Expression leftHandSide = new BinaryExpression(assumption, new BinaryOperator(BinaryOperatorType.LAND), predicate);
-            Expression newAssumption = new BinaryExpression(leftHandSide, new BinaryOperator(BinaryOperatorType.IMPLIES), evaluatedExpression);
+            Expression rightHandSide = new BinaryExpression(predicate, new BinaryOperator(BinaryOperatorType.IMPLIES), evaluatedExpression);
+            Expression newAssumption = new BinaryExpression(previousAssumption, new BinaryOperator(BinaryOperatorType.LAND), rightHandSide);
             
             assumption = newAssumption;
             return null;
