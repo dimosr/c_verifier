@@ -282,14 +282,6 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             
             return null;
         }
-        
-	/*@Override
-	public Void visitEnsures(EnsuresContext ctx) {
-		inEnsures = true;
-		Void result = super.visitEnsures(ctx);
-		inEnsures = false;
-		return result;
-	}*/
 	
 	/*@Override
 	public Void visitCallStmt(CallStmtContext ctx) {
