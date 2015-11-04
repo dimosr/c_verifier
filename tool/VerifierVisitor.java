@@ -245,19 +245,21 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             ModifiedSet unionSet = modSet1.union(modSet2);
             
             for(String variable : unionSet.getLocalsModified()) {
-                currentModSet.addLocal(variable);
+                if( currentMapping.isLocal(variable) || currentMapping.isGlobal(variable) ) {     //if it is was not a locally scoped variable
+                    currentModSet.addLocal(variable);
                 
-                Integer freshIndex = fresh.fresh(variable);
-                currentMapping.updateExistingVar(variable, freshIndex);
-                String finalVariable = variable + freshIndex;
+                    Integer freshIndex = fresh.fresh(variable);
+                    currentMapping.updateExistingVar(variable, freshIndex);
+                    String finalVariable = variable + freshIndex;
                 
-                String ifVariable = variable + mapping1.getVarIndex(variable);
-                String elseVariable = variable + mapping2.getVarIndex(variable);
+                    String ifVariable = variable + mapping1.getVarIndex(variable);
+                    String elseVariable = variable + mapping2.getVarIndex(variable);
                 
-                TernaryExpression assignmentExpression = new TernaryExpression(newPredicate, new VarRefExpression(ifVariable), new VarRefExpression(elseVariable)) ;
-                Assignment branchResolutionAssignment = new Assignment(finalVariable, assignmentExpression);
+                    TernaryExpression assignmentExpression = new TernaryExpression(newPredicate, new VarRefExpression(ifVariable), new VarRefExpression(elseVariable)) ;
+                    Assignment branchResolutionAssignment = new Assignment(finalVariable, assignmentExpression);
                 
-                ssa.addAssignment(branchResolutionAssignment);
+                    ssa.addAssignment(branchResolutionAssignment);
+                }
             }
             for(String variable : unionSet.getGlobalsModified()) {
                 currentModSet.addGlobal(variable);
