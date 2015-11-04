@@ -163,11 +163,20 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         //this method will only be called for local variables!!
         @Override
 	public Void visitVarDecl(VarDeclContext ctx) {
-		String name = ctx.ident.name.getText();
-                fresh.addNewLocal(name);
-                mapping.addNewLocal(name);
+		String variableName = ctx.ident.name.getText();
+                if(mapping.isLocal(variableName) || (mapping.isGlobal(variableName))) {     //shadowing
+                    int previousIndex = mapping.getVarIndex(variableName);
+                    mapping.addShadowedPreviousIndex(variableName, previousIndex);
+                    int newIndex = fresh.fresh(variableName);
+                    mapping.updateExistingVar(variableName, newIndex);
+                }
+                else {          //locally scoped
+                    fresh.addNewLocal(variableName);
+                    mapping.addNewLocal(variableName);
+                    mapping.addLocallyScopedVar(variableName);
+                }
 		
-		peekLocalsStack().add(name);
+		peekLocalsStack().add(variableName);
 		return null;
 	}
         
@@ -245,15 +254,23 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             ModifiedSet unionSet = modSet1.union(modSet2);
             
             for(String variable : unionSet.getLocalsModified()) {
-                if( currentMapping.isLocal(variable) || currentMapping.isGlobal(variable) ) {     //if it is was not a locally scoped variable
+                if( !mapping1.isLocallyScopedVar( variable) && !mapping2.isLocallyScopedVar(variable) ) {     //if it was not a locally scoped variable
                     currentModSet.addLocal(variable);
                 
                     Integer freshIndex = fresh.fresh(variable);
                     currentMapping.updateExistingVar(variable, freshIndex);
                     String finalVariable = variable + freshIndex;
                 
-                    String ifVariable = variable + mapping1.getVarIndex(variable);
-                    String elseVariable = variable + mapping2.getVarIndex(variable);
+                    String ifVariable = null, elseVariable = null;
+                    if(mapping1.isShadowed(variable))
+                        ifVariable = variable + mapping1.getIndexBeforeShadowing(variable);
+                    else
+                        ifVariable = variable + mapping1.getVarIndex(variable);
+                     
+                    if(mapping2.isShadowed(variable))
+                        elseVariable = variable + mapping2.getIndexBeforeShadowing(variable);
+                    else
+                        elseVariable = variable + mapping2.getVarIndex(variable);
                 
                     TernaryExpression assignmentExpression = new TernaryExpression(newPredicate, new VarRefExpression(ifVariable), new VarRefExpression(elseVariable)) ;
                     Assignment branchResolutionAssignment = new Assignment(finalVariable, assignmentExpression);
@@ -268,8 +285,18 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 currentMapping.updateExistingVar(variable, freshIndex);
                 String finalVariable = "G__" + variable + freshIndex;
                 
-                String ifVariable = "G__" + variable + mapping1.getVarIndex(variable);
-                String elseVariable = "G__" + variable + mapping2.getVarIndex(variable);
+                String ifVariable = null, elseVariable = null;
+                if(mapping1.isShadowed(variable))
+                    ifVariable = "G__" + variable + mapping1.getIndexBeforeShadowing(variable);
+                else
+                    ifVariable = "G__" + variable + mapping1.getVarIndex(variable);
+                     
+                if(mapping2.isShadowed(variable))
+                    elseVariable = "G__" + variable + mapping2.getIndexBeforeShadowing(variable);
+                else
+                    elseVariable = "G__" + variable + mapping2.getVarIndex(variable);
+                
+                
                 
                 TernaryExpression assignmentExpression = new TernaryExpression(newPredicate, new VarRefExpression(ifVariable), new VarRefExpression(elseVariable)) ;
                 Assignment branchResolutionAssignment = new Assignment(finalVariable, assignmentExpression);

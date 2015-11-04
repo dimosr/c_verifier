@@ -1,20 +1,29 @@
 package tool;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class VariablesMapping {
     private Map<String, Integer> localMapping;
     private Map<String, Integer> globalMapping;
+    private Map<String, Integer> shadowedVariables;         //store old indexes for shadowing
+    private Set<String> locallyScoped;                      //flag locally scoped variables - to discard them
+    
     
     public VariablesMapping() {
         localMapping = new HashMap<String, Integer>();
         globalMapping = new HashMap<String, Integer>();
+        shadowedVariables = new HashMap<String, Integer>();
+        locallyScoped = new HashSet<String>();
     }
     
     private VariablesMapping(Map<String, Integer> localMapping, Map<String, Integer>globalMapping) {
         this.localMapping = localMapping;
         this.globalMapping = globalMapping;
+        this.shadowedVariables = new HashMap<String, Integer>();
+        this.locallyScoped = new HashSet<String>();
     }
     
     public VariablesMapping deepClone() {
@@ -71,5 +80,25 @@ public class VariablesMapping {
     
     private Map<String, Integer> getGlobalMapping() {
         return globalMapping;
+    }
+    
+    public void addLocallyScopedVar(String variableName) {
+        locallyScoped.add(variableName);
+    }
+    
+    public boolean isLocallyScopedVar(String variableName) {
+        return locallyScoped.contains(variableName);
+    }
+    
+    public void addShadowedPreviousIndex(String variableName, int index) {
+        shadowedVariables.put(variableName, index);
+    }
+    
+    public boolean isShadowed(String variableName) {
+        return shadowedVariables.containsKey(variableName);
+    }
+    
+    public int getIndexBeforeShadowing(String variableName) {
+        return shadowedVariables.get(variableName);
     }
 }
