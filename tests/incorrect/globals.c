@@ -1,3 +1,7 @@
+// RUN: %tool "%s" > "%t"
+// RUN: %diff %INCORRECT "%t"
+
+
 int g;
 
 int globals() {
