@@ -340,7 +340,8 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
 	@Override
 	public Void visitHavocStmt(HavocStmtContext ctx) {
             String variableName = ctx.var.ident.getText();
-            fresh.fresh(variableName);
+            int newIndex = fresh.fresh(variableName);
+            mapping.updateExistingVar(variableName, newIndex);
             return null;
 	}
         
@@ -766,7 +767,7 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 String ssaVariableName = "G__" + variableName + "0";
                 oldExpr = new VarRefExpression(ssaVariableName);
             }
-            else if(nonSummarizationPostConditions){
+            else if(!nonSummarizationPostConditions){
                 String ssaVariableName = "G__" + variableName + mapping.getGlobalIndex(variableName);
                 oldExpr = new VarRefExpression(ssaVariableName);
             }
