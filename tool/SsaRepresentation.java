@@ -78,10 +78,15 @@ public class SsaRepresentation {
         ssaFormula.append("\n");
             
         /**  assertions **/
-        for(Assertion assertion : this.getAssertions()) {
-            ssaFormula.append("assert ( ");
-            ssaFormula.append(getExpressionSsa(assertion.expression));
-            ssaFormula.append(" ); \n");
+        if(getAssertions().size() != 0) {
+            for(Assertion assertion : this.getAssertions()) {
+                ssaFormula.append("assert ( ");
+                ssaFormula.append(getExpressionSsa(assertion.expression));
+                ssaFormula.append(" ); \n");
+            }
+        }
+        else {
+            ssaFormula.append("assert(false) \n");
         }
             
         return ssaFormula.toString();
@@ -116,11 +121,16 @@ public class SsaRepresentation {
         smtFormula.append("\n");
             
         /**  assertions - MUST use prefix operators**/
-        smtFormula.append("(assert (not (and \n");
-        for(Assertion assertion : this.getAssertions()) { 
-            smtFormula.append("(tobool ").append(getExpressionSMT(assertion.expression)).append(")\n");
+        if( this.getAssertions().size() != 0 ) {
+            smtFormula.append("(assert (not (and \n");
+            for(Assertion assertion : this.getAssertions()) { 
+                smtFormula.append("(tobool ").append(getExpressionSMT(assertion.expression)).append(")\n");
+            }
+            smtFormula.append("\n) ) )");
         }
-        smtFormula.append("\n) ) )");
+        else {
+            smtFormula.append("(assert (tobool (_ bv0 32)))\n");
+        }
         
         return smtFormula.toString();
     }
@@ -279,11 +289,16 @@ public class SsaRepresentation {
         smtFormula.append("\n");
             
         /**  assertions - MUST use prefix operators**/
-        smtFormula.append("(assert (not (and \n");
-        for(Assertion assertion : this.getAssertions()) { 
-            smtFormula.append(getExpressionPseudoSMT(assertion.expression)).append("\n");
+        if(getAssertions().size() != 0) {
+            smtFormula.append("(assert (not (and \n");
+            for(Assertion assertion : this.getAssertions()) { 
+                smtFormula.append(getExpressionPseudoSMT(assertion.expression)).append("\n");
+            }
+            smtFormula.append("\n) ) )");
         }
-        smtFormula.append("\n) ) )");
+        else {
+            smtFormula.append("(assert (_ bv0 32))\n");
+        }
         
         return smtFormula.toString();
     }
