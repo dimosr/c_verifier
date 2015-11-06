@@ -89,9 +89,11 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         private Expression assumption;
         
-        private boolean nonSummarizationPreConditions;
+        private boolean preConditions;
+        private boolean summarizationPreConditions;
         
-        private boolean nonSummarizationPostConditions;
+        private boolean postConditions;
+        private boolean summarizationPostConditions;
         
         Expression returnExpression;
         
@@ -136,11 +138,12 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
                 currentMapping.addNewLocal(formalParamName);
             }
             
-            nonSummarizationPreConditions = true;
+            summarizationPreConditions = false;
+            preConditions = true;
             for(PrepostContext preOrPostCondition : ctx.contract){
                 super.visitPrepost(preOrPostCondition);
             }
-            nonSummarizationPreConditions = false;
+            preConditions = false;
             
             for(SimpleCParser.StmtContext statementCtx : ctx.stmts) {
                 visitStmt(statementCtx);
@@ -149,11 +152,12 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
             super.visitExpr(ctx.returnExpr);
             returnExpression = expression;
             
-            nonSummarizationPostConditions = true;
+            summarizationPostConditions = false;
+            postConditions = true;
             for(PrepostContext preOrPostCondition : ctx.contract){
                 super.visitPrepost(preOrPostCondition);
             }
-            nonSummarizationPostConditions = false;
+            postConditions = false;
             
             popLocalsStack();
             parameters = null;
@@ -364,18 +368,22 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         
         @Override
         public Void visitRequires(RequiresContext ctx) {
-            if(nonSummarizationPreConditions) {
-                visitExpr(ctx.condition);
-                return executeAssumeExpression(expression);
+            if(preConditions) {
+                if(!summarizationPreConditions) {
+                    visitExpr(ctx.condition);
+                    return executeAssumeExpression(expression);
+                }
             }
             return null;
         }
         
         @Override
         public Void visitEnsures(EnsuresContext ctx) {
-            if(nonSummarizationPostConditions) {
-                visitExpr(ctx.condition);
-                return executeAssertionExpression(expression);
+            if(postConditions) {
+                if(!summarizationPostConditions) {
+                    visitExpr(ctx.condition);
+                    return executeAssertionExpression(expression);
+                }
             }
             return null;
         }
@@ -763,11 +771,11 @@ public class VerifierVisitor extends SimpleCBaseVisitor<Void> {
         public Void visitOldExpr(OldExprContext ctx) {
             String variableName = ctx.arg.ident.name.getText();
             VarRefExpression oldExpr = null;
-            if(nonSummarizationPreConditions){
+            if( (!summarizationPreConditions) && (!summarizationPostConditions) ){      //\old present in pre-post conditions or expressions of procedure under verification
                 String ssaVariableName = "G__" + variableName + "0";
                 oldExpr = new VarRefExpression(ssaVariableName);
             }
-            else if(!nonSummarizationPostConditions){
+            else {           //\old present in pre-post conditions of called procedure
                 String ssaVariableName = "G__" + variableName + mapping.getGlobalIndex(variableName);
                 oldExpr = new VarRefExpression(ssaVariableName);
             }
