@@ -78,7 +78,7 @@ public class SsaRepresentation {
         ssaFormula.append("\n");
             
         /**  assertions **/
-        if(getAssertions().size() != 0) {
+        if(!getAssertions().isEmpty()) {
             for(Assertion assertion : this.getAssertions()) {
                 ssaFormula.append("assert ( ");
                 ssaFormula.append(getExpressionSsa(assertion.expression));
@@ -121,7 +121,7 @@ public class SsaRepresentation {
         smtFormula.append("\n");
             
         /**  assertions - MUST use prefix operators**/
-        if( this.getAssertions().size() != 0 ) {
+        if( !this.getAssertions().isEmpty() ) {
             smtFormula.append("(assert (not (and \n");
             for(Assertion assertion : this.getAssertions()) { 
                 smtFormula.append("(tobool ").append(getExpressionSMT(assertion.expression)).append(")\n");
@@ -289,7 +289,7 @@ public class SsaRepresentation {
         smtFormula.append("\n");
             
         /**  assertions - MUST use prefix operators**/
-        if(getAssertions().size() != 0) {
+        if(!getAssertions().isEmpty()) {
             smtFormula.append("(assert (not (and \n");
             for(Assertion assertion : this.getAssertions()) { 
                 smtFormula.append(getExpressionPseudoSMT(assertion.expression)).append("\n");
