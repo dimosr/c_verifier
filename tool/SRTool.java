@@ -41,7 +41,6 @@ public class SRTool {
 		}
 		
                 Set<String> globalVariables = tc.getGlobals();
-		assert ctx.procedures.size() == 1; // For Part 1 of the coursework, this can be assumed
 		
                 VerifierVisitor verifierVisitor = new VerifierVisitor(globalVariables);
 		for(ProcedureDeclContext proc : ctx.procedures) {
