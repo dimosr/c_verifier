@@ -1,8 +1,11 @@
 package tool;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,6 +25,7 @@ import util.program.Program;
 public class SRTool {
 
     private static final int TIMEOUT = 30;
+    private static final boolean DEBUG_MODE = true;
 
 	public static void main(String[] args) throws IOException, InterruptedException {
         String filename = args[0];
@@ -43,6 +47,11 @@ public class SRTool {
 			}
 			System.exit(1);
 		}
+                
+                if(DEBUG_MODE) {
+                    deleteDirectory(new File("output"));
+                    Files.createDirectory(Paths.get("output"));
+                }
 		
                 GeneratorVisitor generatorVisitor = new GeneratorVisitor();
                 generatorVisitor.visitProgram(ctx);
@@ -51,7 +60,7 @@ public class SRTool {
 		
                 VerifierVisitor verifierVisitor = new VerifierVisitor(program);
 		for(Procedure procedure : program.procedures.values()) {
-			VCGenerator vcgen = new VCGenerator(program, procedure, verifierVisitor);
+			VCGenerator vcgen = new VCGenerator(program, procedure, verifierVisitor, DEBUG_MODE);
 			String vc = vcgen.generateVC().toString();
 
 			ProcessExec process = new ProcessExec("./z3", "-smt2", "-in");
@@ -78,5 +87,18 @@ public class SRTool {
 		System.out.println("CORRECT");
 		System.exit(0);
 		
+    }
+        
+    static public boolean deleteDirectory(File path) {
+        if( path.exists() ) {
+            File[] files = path.listFiles();
+            for(int i=0; i<files.length; i++) {
+                if(files[i].isDirectory())
+                    deleteDirectory(files[i]);
+                else
+                    files[i].delete();
+            }
+        }
+        return( path.delete() );
     }
 }

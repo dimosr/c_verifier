@@ -17,17 +17,19 @@ import util.program.Program;
 
 public class VCGenerator {
     
-        private static final boolean DEBUG_MODE = true;
+        
 
 	private Procedure procedure;
         private Program program;
         
         private VerifierVisitor verifierVisitor;
+        private boolean debugMode;
 	
-	public VCGenerator(Program program, Procedure procedureUnderVerification, VerifierVisitor verifierVisitor) {
+	public VCGenerator(Program program, Procedure procedureUnderVerification, VerifierVisitor verifierVisitor, boolean debugMode) {
 		this.procedure = procedureUnderVerification;
                 this.program = program;
                 this.verifierVisitor = verifierVisitor;
+                this.debugMode = debugMode;
 	}
 	
 	public StringBuilder generateVC() throws FileNotFoundException, IOException {
@@ -44,11 +46,7 @@ public class VCGenerator {
 		
 		result.append("\n(check-sat)\n");
                 
-                if(DEBUG_MODE) {
-                    deleteDirectory(new File("output"));
-                    Files.createDirectory(Paths.get("output"));
-                    
-                
+                if(debugMode) {
                     String ssaFormatFile = "output" + File.separator + procedure.procedureName + "_ssa_format.txt";
                     try (PrintStream out = new PrintStream(new FileOutputStream(ssaFormatFile))) {
                         out.print(ssa.getText(fresh));
@@ -68,17 +66,6 @@ public class VCGenerator {
 		return result;
 	}
         
-        static public boolean deleteDirectory(File path) {
-            if( path.exists() ) {
-                File[] files = path.listFiles();
-                for(int i=0; i<files.length; i++) {
-                    if(files[i].isDirectory())
-                        deleteDirectory(files[i]);
-                    else
-                        files[i].delete();
-                }
-            }
-            return( path.delete() );
-        }
+        
 
 }
