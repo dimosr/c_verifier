@@ -21,6 +21,7 @@ import util.operators.UnaryOperatorType;
 import util.program.Assertion;
 import util.program.Assignment;
 import util.program.EnsureCondition;
+import util.program.Invariant;
 import util.program.Procedure;
 import util.program.Program;
 import util.program.RequireCondition;
@@ -176,7 +177,9 @@ public class VerifierVisitor {
             List<String> formalParams = calledProcedure.parameters;
             List<Expression> actualParams = stmt.parameters;
             VarRefExpression returnVariable = new VarRefExpression(calledProcedure.procedureName + "_ret");
-            
+            if(!mapping.isLocal(returnVariable.variableName)) {
+                visitStmt(new VarDeclStatement(returnVariable.variableName));
+            }
             for(int i = 0; i < formalParams.size(); i++) {
                 formalActualParamsMapping.put(formalParams.get(i), actualParams.get(i));
             }
@@ -202,9 +205,6 @@ public class VerifierVisitor {
                 executeAssumeExpression(evaluatedExpr);
             }
             
-            if(!mapping.isLocal(returnVariable.variableName)) {
-                visitStmt(new VarDeclStatement(returnVariable.variableName));
-            }
             visitStmt(new AssignStatement(stmt.variableName, returnVariable));
         }
         
@@ -300,7 +300,24 @@ public class VerifierVisitor {
         }
         
         public void visitStmt(WhileStatement stmt) {
+            /** Using loop summarization **/
+            for(Invariant invariant : stmt.invariants)
+                executeAssertionExpression(invariant.expression.applyMappings(mapping, procedure.returnExpression), invariant, stmt.invariants, SourceType.INVARIANT);
             
+            Set<String> loopModSet = stmt.getModifiedSet(program, procedure.localVariables);
+            for(String variable : loopModSet)
+                visitStmt(new HavocStatement(variable));
+            
+            for(Invariant invariant : stmt.invariants)
+                executeAssumeExpression(invariant.expression.applyMappings(mapping, procedure.returnExpression));
+            
+            BlockStatement generatedIfBlock = new BlockStatement(stmt.blockStatement.statements);
+            for(Invariant invariant : stmt.invariants)
+                generatedIfBlock.statements.add(new AssertStatement(invariant.expression));
+            generatedIfBlock.statements.add(new AssumeStatement(new ConstantExpression("0")));     //assume false
+            IfStatement ifStmt = new IfStatement(stmt.loopCondition, generatedIfBlock);
+            visitStmt(ifStmt);
+            /** Using loop summarization **/
         }
         
         public void visitStmt(Statement stmt) {

@@ -27,6 +27,7 @@ public class WhileStatement extends Statement {
         Set<String> modSet = new HashSet();
         Set<String> blockModSet = blockStatement.getModifiedSet(program, localVariables);
         for(String variable : blockModSet)
+            if(program.globalVariables.contains(variable) || localVariables.contains(variable))
                 modSet.add(variable); 
         return modSet;
     }

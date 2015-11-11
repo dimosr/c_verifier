@@ -24,6 +24,7 @@ import util.operators.BinaryOperatorType;
 import util.operators.UnaryOperator;
 import util.operators.UnaryOperatorType;
 import util.program.EnsureCondition;
+import util.program.Invariant;
 import util.program.Procedure;
 import util.program.Program;
 import util.program.RequireCondition;
@@ -36,16 +37,16 @@ import util.statement.HavocStatement;
 import util.statement.IfStatement;
 import util.statement.Statement;
 import util.statement.VarDeclStatement;
+import util.statement.WhileStatement;
 
 public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
-    
-        private Expression conditionHolder;
         
         private Expression expressionHolder;
         private Statement statementHolder;
         private Procedure procedureHolder;
         
         private String prePostConditionType;
+        private String invariantType;
         
         private Program program;
         
@@ -618,6 +619,43 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
             }
             CallStatement callStmt = new CallStatement(variableName, procedureName, parameters);
             statementHolder = callStmt;
+            return null;
+        }
+        
+        @Override
+        public Void visitWhileStmt(WhileStmtContext ctx) {
+            visitExpr(ctx.condition);
+            Expression loopCondition = expressionHolder;
+            
+            List<Invariant> invariants = new ArrayList();
+            for(LoopInvariantContext loopInvCtx : ctx.invariantAnnotations) {
+                visitLoopInvariant(loopInvCtx);
+                Invariant invariant = new Invariant(expressionHolder);
+                if(invariantType.equals("candidate")) {
+                    invariant.setAsCandidate();
+                }
+                invariants.add(invariant);
+            }
+            
+            visitBlockStmt(ctx.body);
+            BlockStatement loopBody = (BlockStatement) statementHolder;
+            
+            WhileStatement whileStmt = new WhileStatement(loopCondition, invariants, loopBody);
+            statementHolder = whileStmt;
+            return null;
+        }
+        
+        @Override
+        public Void visitInvariant(InvariantContext ctx) {
+            invariantType = "regular";
+            visitExpr(ctx.condition);
+            return null;
+        }
+        
+        @Override
+        public Void visitCandidateInvariant(CandidateInvariantContext ctx) {
+            invariantType = "candidate";
+            visitExpr(ctx.condition);
             return null;
         }
 }
