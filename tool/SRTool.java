@@ -3,6 +3,7 @@ import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -12,8 +13,11 @@ import parser.SimpleCLexer;
 import parser.SimpleCParser;
 import parser.SimpleCParser.ProcedureDeclContext;
 import parser.SimpleCParser.ProgramContext;
+import parser.SimpleCParser.VarDeclContext;
 import util.ProcessExec;
 import util.ProcessTimeoutException;
+import util.program.Procedure;
+import util.program.Program;
 
 public class SRTool {
 
@@ -40,11 +44,13 @@ public class SRTool {
 			System.exit(1);
 		}
 		
-                Set<String> globalVariables = tc.getGlobals();
+                GeneratorVisitor generatorVisitor = new GeneratorVisitor();
+                generatorVisitor.visitProgram(ctx);
+                Program program = generatorVisitor.getProgram();
 		
-                VerifierVisitor verifierVisitor = new VerifierVisitor(globalVariables);
-		for(ProcedureDeclContext proc : ctx.procedures) {
-			VCGenerator vcgen = new VCGenerator(proc, verifierVisitor);
+                VerifierVisitor verifierVisitor = new VerifierVisitor(program.globalVariables);
+		for(Procedure procedure : program.procedures) {
+			VCGenerator vcgen = new VCGenerator(program, procedure, verifierVisitor);
 			String vc = vcgen.generateVC().toString();
 
 			ProcessExec process = new ProcessExec("./z3", "-smt2", "-in");

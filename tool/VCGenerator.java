@@ -7,24 +7,28 @@ import java.util.Map;
 import java.util.Set;
 import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.ProcedureDeclContext;
-import util.assertions.Assertion;
-import util.assignments.Assignment;
+import util.program.Assertion;
+import util.program.Assignment;
+import util.program.Procedure;
+import util.program.Program;
 
 public class VCGenerator {
 
-	private ProcedureDeclContext proc;
+	private Procedure procedure;
+        private Program program;
         
-        private VerifierVisitor visitor;
+        private VerifierVisitor verifierVisitor;
 	
-	public VCGenerator(ProcedureDeclContext proc, VerifierVisitor visitor) {
-		this.proc = proc;
-                this.visitor = visitor;
+	public VCGenerator(Program program, Procedure procedureUnderVerification, VerifierVisitor verifierVisitor) {
+		this.procedure = procedureUnderVerification;
+                this.program = program;
+                this.verifierVisitor = verifierVisitor;
 	}
 	
 	public StringBuilder generateVC() throws FileNotFoundException {
-                visitor.visitProcedureDecl(proc);
-                FreshStructure fresh = visitor.getFresh();
-                SsaRepresentation ssa = visitor.getSsa();
+                verifierVisitor.visitProcedure(procedure);
+                FreshStructure fresh = verifierVisitor.getFreshStructure();
+                SsaRepresentation ssa = verifierVisitor.getSsa();
             
                 try (PrintStream out = new PrintStream(new FileOutputStream("ssa_format.txt"))) {
                     out.print(ssa.getText(fresh));

@@ -2,6 +2,7 @@ package util.expressions;
 
 import java.util.ArrayList;
 import java.util.List;
+import tool.VariablesMapping;
 import util.misc.Tuple;
 import util.operators.BinaryOperator;
 
@@ -19,5 +20,12 @@ public class BinaryExpression extends Expression {
             
     public ExpressionType getType() {
         return ExpressionType.BINARY;
+    }
+    
+    public Expression applyMappings(VariablesMapping mapping, boolean inSummarisation, Expression result) {
+        Expression leftEval = leftExpr.applyMappings(mapping, inSummarisation, result);
+        Expression rightEval = rightExpr.applyMappings(mapping, inSummarisation, result);
+        
+        return new BinaryExpression(leftEval, operator, rightEval);
     }
 }

@@ -1,4 +1,4 @@
-package util.assertions;
+package util.program;
 
 import util.expressions.Expression;
 

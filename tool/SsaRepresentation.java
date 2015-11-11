@@ -6,8 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import util.assertions.Assertion;
-import util.assignments.Assignment;
+import util.program.Assertion;
+import util.program.Assignment;
 import util.expressions.BinaryExpression;
 import util.expressions.ConstantExpression;
 import util.expressions.Expression;
@@ -26,14 +26,17 @@ public class SsaRepresentation {
     
     private List<Assignment> assignments;
     private List<Assertion> assertions;
+    private List<SsaAssertionMapping> assertionMappings;
     
     public SsaRepresentation() {
         assignments = new ArrayList();
         assertions = new ArrayList();
+        assertionMappings = new ArrayList();
     }
     
-    public void addAssertion(Assertion assertion) {
+    public void addAssertion(Assertion assertion, SsaAssertionMapping mapping) {
         assertions.add(assertion);
+        assertionMappings.add(mapping);
     }
     
     public void addAssignment(Assignment assignment) {
