@@ -1,5 +1,6 @@
 package util.expressions;
 
+import java.util.Map;
 import tool.VariablesMapping;
 
 
@@ -14,16 +15,15 @@ public class OldExpression extends Expression {
         return ExpressionType.OLD;
     }
     
-    public Expression applyMappings(VariablesMapping mapping, boolean inSummarisation, Expression result) {
+    public Expression applyMappings(VariablesMapping mapping, Expression result) {
         VarRefExpression oldExpr = null;
-        if( !inSummarisation ){      //\old present in pre-post conditions or expressions of procedure under verification
-            String ssaVariableName = "G__" + variableName + "0";
-            oldExpr = new VarRefExpression(ssaVariableName);
-        }
-        else {           //\old present in pre-post conditions of called procedure
-            String ssaVariableName = "G__" + variableName + mapping.getGlobalIndex(variableName);
-            oldExpr = new VarRefExpression(ssaVariableName);
-        }
+        String ssaVariableName = "G__" + variableName + "0";
+        oldExpr = new VarRefExpression(ssaVariableName);
+        return oldExpr;
+    }
+    
+    public Expression applySummarisationMappings(VariablesMapping mapping, Map<String, Expression> parametersMapping, Expression resultExpr) {
+        VarRefExpression oldExpr = new VarRefExpression(variableName);
         return oldExpr;
     }
 }

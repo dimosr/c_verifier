@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import util.expressions.Expression;
+import util.program.Procedure;
+import util.program.Program;
 
 public class CallStatement extends Statement {
     public String variableName;
@@ -20,8 +22,14 @@ public class CallStatement extends Statement {
         return StatementType.CALL;
     }
     
-    /** UNSUPPORTED - USE PROCEDURE getModifiedSet **/
-    public Set<String> getModifiedSet() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public Set<String> getModifiedSet(Program program, List<String> localVariables) {
+        Set<String> modSet = new HashSet();
+        Set<String> calledProcModSet = program.procedures.get(procedureName).modifiedSet;
+        for(String variable : calledProcModSet) {
+            if(program.globalVariables.contains(variable) || localVariables.contains(variable))
+                modSet.add(variable);
+        }
+        modSet.add(variableName);
+        return modSet;
     }
 }

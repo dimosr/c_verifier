@@ -1,5 +1,6 @@
 package util.expressions;
 
+import java.util.Map;
 import tool.VariablesMapping;
 
 public class ConstantExpression extends Expression {
@@ -14,7 +15,11 @@ public class ConstantExpression extends Expression {
         return ExpressionType.CONSTANT;
     }
     
-    public Expression applyMappings(VariablesMapping mapping, boolean inSummarisation, Expression result) {
+    public Expression applyMappings(VariablesMapping mapping, Expression result) {
+        return new ConstantExpression(intValue);
+    }
+    
+    public Expression applySummarisationMappings(VariablesMapping mapping, Map<String, Expression> parametersMapping, Expression resultExpr) {
         return new ConstantExpression(intValue);
     }
 }

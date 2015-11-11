@@ -1,8 +1,10 @@
 package util.statement;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import util.expressions.Expression;
+import util.program.Program;
 
 public class IfStatement extends Statement {
     public Expression ifCondition;
@@ -24,13 +26,13 @@ public class IfStatement extends Statement {
         return StatementType.IF;
     }
     
-    public Set<String> getModifiedSet() {
+    public Set<String> getModifiedSet(Program program, List<String> localVariables) {
         Set<String> modSet = new HashSet();
-        Set<String> ifModSet = ifStatement.getModifiedSet();
+        Set<String> ifModSet = ifStatement.getModifiedSet(program, localVariables);
         for(String variable : ifModSet)
                 modSet.add(variable); 
         if(elseStatement != null) {
-            Set<String> elseModSet = null;
+            Set<String> elseModSet = elseStatement.getModifiedSet(program, localVariables);
             for(String variable : elseModSet)
                 modSet.add(variable);
         }

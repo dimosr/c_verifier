@@ -1,8 +1,10 @@
 package util.statement;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import util.expressions.Expression;
+import util.program.Program;
 
 public class AssignStatement extends Statement {
     public String variable;
@@ -17,7 +19,7 @@ public class AssignStatement extends Statement {
         return StatementType.ASSIGN;
     }
     
-    public Set<String> getModifiedSet() {
+    public Set<String> getModifiedSet(Program program, List<String> localVariables) {
         Set<String> modSet = new HashSet();
         modSet.add(variable);
         return modSet;

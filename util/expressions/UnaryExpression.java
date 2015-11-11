@@ -2,6 +2,7 @@ package util.expressions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import tool.VariablesMapping;
 import util.operators.UnaryOperator;
 
@@ -28,11 +29,19 @@ public class UnaryExpression extends Expression {
         return ExpressionType.UNARY;
     }
     
-    public Expression applyMappings(VariablesMapping mapping, boolean inSummarisation, Expression result) {
-        Expression exprEval = expr.applyMappings(mapping, inSummarisation, result);
+    public Expression applyMappings(VariablesMapping mapping, Expression result) {
+        Expression exprEval = expr.applyMappings(mapping, result);
         UnaryExpression unaryEval = new UnaryExpression(exprEval);
         for(UnaryOperator op : operators)
             unaryEval.addOperator(op);
         return unaryEval;
     }
+    
+    public Expression applySummarisationMappings(VariablesMapping mapping, Map<String, Expression> parametersMapping, Expression resultExpr) {
+        Expression exprEval = expr.applySummarisationMappings(mapping, parametersMapping, resultExpr);
+        UnaryExpression unaryEval = new UnaryExpression(exprEval);
+        for(UnaryOperator op : operators)
+            unaryEval.addOperator(op);
+        return unaryEval;
+    };
 }

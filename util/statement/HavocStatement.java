@@ -1,7 +1,9 @@
 package util.statement;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import util.program.Program;
 
 
 public class HavocStatement extends Statement {
@@ -15,7 +17,7 @@ public class HavocStatement extends Statement {
         return StatementType.HAVOC;
     }
     
-    public Set<String> getModifiedSet() {
+    public Set<String> getModifiedSet(Program program, List<String> localVariables) {
         Set<String> modSet = new HashSet();
         modSet.add(variable);
         return modSet;

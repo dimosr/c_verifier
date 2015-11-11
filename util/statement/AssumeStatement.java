@@ -1,8 +1,10 @@
 package util.statement;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import util.expressions.Expression;
+import util.program.Program;
 
 public class AssumeStatement extends Statement {
     public Expression expression;
@@ -15,7 +17,7 @@ public class AssumeStatement extends Statement {
         return StatementType.ASSUME;
     }
     
-    public Set<String> getModifiedSet() {
+    public Set<String> getModifiedSet(Program program, List<String> localVariables) {
         return new HashSet();
     }
 }

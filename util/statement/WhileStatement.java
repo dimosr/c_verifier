@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import util.expressions.Expression;
 import util.program.Invariant;
+import util.program.Program;
 
 
 public class WhileStatement extends Statement {
@@ -22,9 +23,9 @@ public class WhileStatement extends Statement {
         return StatementType.WHILE;
     }
     
-    public Set<String> getModifiedSet() {
+    public Set<String> getModifiedSet(Program program, List<String> localVariables) {
         Set<String> modSet = new HashSet();
-        Set<String> blockModSet = blockStatement.getModifiedSet();
+        Set<String> blockModSet = blockStatement.getModifiedSet(program, localVariables);
         for(String variable : blockModSet)
                 modSet.add(variable); 
         return modSet;

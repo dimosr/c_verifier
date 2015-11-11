@@ -1,6 +1,9 @@
 package tool;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.ProcedureDeclContext;
@@ -19,6 +22,7 @@ import util.program.Assertion;
 import util.program.Assignment;
 import util.program.EnsureCondition;
 import util.program.Procedure;
+import util.program.Program;
 import util.program.RequireCondition;
 import util.statement.AssertStatement;
 import util.statement.AssignStatement;
@@ -44,6 +48,7 @@ public class VerifierVisitor {
         
         private Set<String> globals;
         
+        private Program program;
         private Procedure procedure;
         
         public SsaRepresentation getSsa(){
@@ -54,8 +59,9 @@ public class VerifierVisitor {
             return freshStructure;
         }
         
-        public VerifierVisitor(Set<String> globalVariables) {
-            globals = globalVariables;
+        public VerifierVisitor(Program program) {
+            globals = program.globalVariables;
+            this.program = program;
         }
         
 	public void visitProcedure(Procedure procedure) {
@@ -82,7 +88,7 @@ public class VerifierVisitor {
             }
             
             for(RequireCondition require : procedure.preConditions) {
-                executeAssumeExpression(require.expression);
+                executeAssumeExpression(require.expression.applyMappings(mapping, procedure.returnExpression));
             }
             
             for(Statement stmt : procedure.statements) {
@@ -90,15 +96,14 @@ public class VerifierVisitor {
             }
             
             for(EnsureCondition ensure : procedure.postConditions) {
-                executeAssertionExpression(ensure.expression, ensure, procedure.postConditions, SourceType.ENSURES);
+                executeAssertionExpression(ensure.expression.applyMappings(mapping, procedure.returnExpression), ensure, procedure.postConditions, SourceType.ENSURES);
             }
             
         }
         
         
-        public void executeAssumeExpression(Expression expression) {
+        public void executeAssumeExpression(Expression evaluatedExpression) {
             Expression previousAssumption = assumption;          
-            Expression evaluatedExpression = expression.applyMappings(mapping, false, procedure.returnExpression);
             
             Expression rightHandSide = new BinaryExpression(predicate, new BinaryOperator(BinaryOperatorType.IMPLIES), evaluatedExpression);
             Expression newAssumption = new BinaryExpression(previousAssumption, new BinaryOperator(BinaryOperatorType.LAND), rightHandSide);
@@ -106,14 +111,13 @@ public class VerifierVisitor {
             assumption = newAssumption;
         }
         
-        public void executeAssertionExpression(Expression expression, Object sourceObject, List sourceHolder, SourceType sourceType) {
+        public void executeAssertionExpression(Expression evaluatedExpression, Object sourceObject, List sourceHolder, SourceType sourceType) {
             Expression leftHandSide = new BinaryExpression(assumption, new BinaryOperator(BinaryOperatorType.LAND), predicate);
-            BinaryExpression assertionExpr = new BinaryExpression(leftHandSide, new BinaryOperator(BinaryOperatorType.IMPLIES), expression.applyMappings(mapping, false, procedure.returnExpression));
+            BinaryExpression assertionExpr = new BinaryExpression(leftHandSide, new BinaryOperator(BinaryOperatorType.IMPLIES), evaluatedExpression);
             
             Assertion assertion = new Assertion(assertionExpr);
             SsaAssertionMapping mapping = new SsaAssertionMapping(sourceObject, sourceHolder, sourceType);
             ssa.addAssertion(assertion, mapping);
-            expression = null;
         }
         
         
@@ -146,18 +150,18 @@ public class VerifierVisitor {
                 modSet.addGlobal(variableName);
             } 
             
-            Assignment assignment = new Assignment(ssaVariableName, stmt.rightHandSideExpr.applyMappings(mapping, false, procedure.returnExpression));
+            Assignment assignment = new Assignment(ssaVariableName, stmt.rightHandSideExpr.applyMappings(mapping, procedure.returnExpression));
             ssa.addAssignment(assignment);
             
             mapping.updateExistingVar(variableName, newValue);
         }
         
         public void visitStmt(AssertStatement stmt) {
-            executeAssertionExpression(stmt.expression, stmt, null, SourceType.ASSERT);
+            executeAssertionExpression(stmt.expression.applyMappings(mapping, procedure.returnExpression), stmt, null, SourceType.ASSERT);
         }
         
         public void visitStmt(AssumeStatement stmt) {
-            executeAssumeExpression(stmt.expression);
+            executeAssumeExpression(stmt.expression.applyMappings(mapping, procedure.returnExpression));
         }
         
         public void visitStmt(HavocStatement stmt) {
@@ -166,8 +170,42 @@ public class VerifierVisitor {
             mapping.updateExistingVar(variableName, newIndex);
         }
         
-        public void visitStmt(CallStatement stmt) {
-            //inSummarization = true !
+        public void visitStmt(CallStatement stmt) {   
+            Procedure calledProcedure = program.procedures.get(stmt.procedureName);
+            Map<String, Expression> formalActualParamsMapping = new HashMap();
+            List<String> formalParams = calledProcedure.parameters;
+            List<Expression> actualParams = stmt.parameters;
+            VarRefExpression returnVariable = new VarRefExpression(calledProcedure.procedureName + "_ret");
+            
+            for(int i = 0; i < formalParams.size(); i++) {
+                formalActualParamsMapping.put(formalParams.get(i), actualParams.get(i));
+            }
+            
+            /** Summarization pre-conditions **/
+            for(RequireCondition require : calledProcedure.preConditions) {
+                Expression expressionWithActualParams = require.expression.applySummarisationMappings(mapping, formalActualParamsMapping, returnVariable);
+                Expression evaluatedExpr = expressionWithActualParams.applyMappings(mapping, returnVariable);
+                executeAssertionExpression(evaluatedExpr, require, calledProcedure.preConditions, SourceType.ASSERT);
+            }
+            
+            /** Summarization havocs **/
+            for(String variable : calledProcedure.modifiedSet) {
+                if(program.globalVariables.contains(variable) || procedure.localVariables.contains(variable))
+                    visitStmt(new HavocStatement(variable));
+            }
+            visitStmt(new HavocStatement(returnVariable.variableName));
+            
+            /** Summarization post-conditions **/
+            for(EnsureCondition ensure : calledProcedure.postConditions) {
+                Expression expressionWithActualParams = ensure.expression.applySummarisationMappings(mapping, formalActualParamsMapping, returnVariable);
+                Expression evaluatedExpr = expressionWithActualParams.applyMappings(mapping, returnVariable);
+                executeAssumeExpression(evaluatedExpr);
+            }
+            
+            if(!mapping.isLocal(returnVariable.variableName)) {
+                visitStmt(new VarDeclStatement(returnVariable.variableName));
+            }
+            visitStmt(new AssignStatement(stmt.variableName, returnVariable));
         }
         
         public void visitStmt(IfStatement stmt) {
@@ -175,7 +213,7 @@ public class VerifierVisitor {
             VariablesMapping currentMapping = mapping;
             ModifiedSet currentModSet = modSet;
             
-            Expression newPredicate = stmt.ifCondition.applyMappings(mapping, false, procedure.returnExpression);
+            Expression newPredicate = stmt.ifCondition.applyMappings(mapping, procedure.returnExpression);
             VariablesMapping mapping1 = currentMapping.deepClone();
             VariablesMapping mapping2 = currentMapping.deepClone();
             
@@ -262,7 +300,7 @@ public class VerifierVisitor {
         }
         
         public void visitStmt(WhileStatement stmt) {
-            //inSummarization = true !
+            
         }
         
         public void visitStmt(Statement stmt) {

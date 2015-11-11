@@ -1,8 +1,10 @@
 package tool;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.antlr.v4.runtime.Token;
 import parser.SimpleCBaseVisitor;
@@ -29,6 +31,7 @@ import util.statement.AssertStatement;
 import util.statement.AssignStatement;
 import util.statement.AssumeStatement;
 import util.statement.BlockStatement;
+import util.statement.CallStatement;
 import util.statement.HavocStatement;
 import util.statement.IfStatement;
 import util.statement.Statement;
@@ -46,6 +49,8 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
         
         private Program program;
         
+        private List<String> procedureLocalVariables;
+        
         
         public Program getProgram() {
             return this.program;
@@ -58,10 +63,10 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
 		globalVariables.add(varDecl.ident.name.getText());
             }
             
-            List<Procedure> procedures = new ArrayList();
+            Map<String, Procedure> procedures = new HashMap();
             for(ProcedureDeclContext procedureCtx : ctx.procedures) {
                 visitProcedureDecl(procedureCtx);
-                procedures.add(procedureHolder);
+                procedures.put(procedureHolder.procedureName, procedureHolder);
             }
             
             program = new Program(globalVariables, procedures);
@@ -70,9 +75,11 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
         
         @Override
 	public Void visitProcedureDecl(ProcedureDeclContext ctx) {
+            String procedureName = ctx.name.getText();
             List<String> parameters = new ArrayList();
             List<RequireCondition> preConditions = new ArrayList();
             List<EnsureCondition> postConditions = new ArrayList();
+            procedureLocalVariables = new ArrayList();
             List<Statement> statements = new ArrayList();
             Expression returnExpression = null;
             
@@ -118,7 +125,7 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
             super.visitExpr(ctx.returnExpr);
             returnExpression = this.expressionHolder;
             
-            procedureHolder = new Procedure(parameters, preConditions, postConditions, statements, returnExpression);
+            procedureHolder = new Procedure(procedureName, parameters, preConditions, postConditions, procedureLocalVariables, statements, returnExpression);
             return null; 
         }
         
@@ -154,6 +161,7 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
         @Override
 	public Void visitVarDecl(VarDeclContext ctx) {
             String variableName = ctx.ident.name.getText();
+            procedureLocalVariables.add(variableName);
             VarDeclStatement VarDeclStmt = new VarDeclStatement(variableName);
             statementHolder = VarDeclStmt;
             return null;
@@ -596,6 +604,20 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
             String variableName = ctx.arg.ident.name.getText();
             OldExpression oldExpr = new OldExpression(variableName);
             expressionHolder = oldExpr;
+            return null;
+        }
+        
+        @Override
+        public Void visitCallStmt(CallStmtContext ctx) {
+            String variableName = ctx.lhs.ident.name.getText();
+            String procedureName = ctx.callee.getText();
+            List<Expression> parameters = new ArrayList();
+            for(ExprContext exprCtx : ctx.actuals) {
+                visitExpr(exprCtx);
+                parameters.add(expressionHolder);
+            }
+            CallStatement callStmt = new CallStatement(variableName, procedureName, parameters);
+            statementHolder = callStmt;
             return null;
         }
 }

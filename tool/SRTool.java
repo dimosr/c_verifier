@@ -47,9 +47,10 @@ public class SRTool {
                 GeneratorVisitor generatorVisitor = new GeneratorVisitor();
                 generatorVisitor.visitProgram(ctx);
                 Program program = generatorVisitor.getProgram();
+                program.calculateAllModSets();
 		
-                VerifierVisitor verifierVisitor = new VerifierVisitor(program.globalVariables);
-		for(Procedure procedure : program.procedures) {
+                VerifierVisitor verifierVisitor = new VerifierVisitor(program);
+		for(Procedure procedure : program.procedures.values()) {
 			VCGenerator vcgen = new VCGenerator(program, procedure, verifierVisitor);
 			String vc = vcgen.generateVC().toString();
 

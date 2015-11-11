@@ -1,5 +1,6 @@
 package util.expressions;
 
+import java.util.Map;
 import tool.VariablesMapping;
 
 public class VarRefExpression extends Expression {
@@ -14,14 +15,25 @@ public class VarRefExpression extends Expression {
         return ExpressionType.VARIABLE_REFERENCE;
     }
     
-    public Expression applyMappings(VariablesMapping mapping, boolean inSummarisation, Expression result) {
+    public Expression applyMappings(VariablesMapping mapping, Expression result) {
         Integer variableIndex = mapping.getVarIndex(variableName);
-        String variableSsaName = null;
-        if(mapping.isLocal(variableName))        
-            variableSsaName = variableName + variableIndex;
-        else if(mapping.isGlobal(variableName)) {
-            variableSsaName = "G__" + variableName + variableIndex;
+        String variableSsaName = variableName;
+        if(mapping.isLocal(variableSsaName))        
+            variableSsaName = variableSsaName + variableIndex;
+        else if(mapping.isGlobal(variableSsaName)) {
+            variableSsaName = "G__" + variableSsaName + variableIndex;
         }
         return new VarRefExpression(variableSsaName);
+    }
+    
+    public Expression applySummarisationMappings(VariablesMapping mapping, Map<String, Expression> parametersMapping, Expression resultExpr) {
+        boolean isFormalParam = parametersMapping.containsKey(variableName);
+        if(isFormalParam) {
+            Expression actualParam = parametersMapping.get(variableName);
+            return actualParam;
+        }
+        else{
+            return this;
+        }
     }
 }
