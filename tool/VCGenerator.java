@@ -2,7 +2,10 @@ package tool;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Set;
 import parser.SimpleCBaseVisitor;
@@ -13,6 +16,8 @@ import util.program.Procedure;
 import util.program.Program;
 
 public class VCGenerator {
+    
+        private static final boolean DEBUG_MODE = true;
 
 	private Procedure procedure;
         private Program program;
@@ -25,18 +30,10 @@ public class VCGenerator {
                 this.verifierVisitor = verifierVisitor;
 	}
 	
-	public StringBuilder generateVC() throws FileNotFoundException {
+	public StringBuilder generateVC() throws FileNotFoundException, IOException {
                 verifierVisitor.visitProcedure(procedure);
                 FreshStructure fresh = verifierVisitor.getFreshStructure();
                 SsaRepresentation ssa = verifierVisitor.getSsa();
-            
-                try (PrintStream out = new PrintStream(new FileOutputStream("ssa_format.txt"))) {
-                    out.print(ssa.getText(fresh));
-                }
-                
-                try (PrintStream out = new PrintStream(new FileOutputStream("pseudo_smt.txt"))) {
-                    out.print(ssa.translateToPseudoSmt(fresh));
-                }
                 
 		StringBuilder result = new StringBuilder("(set-logic QF_BV)\n");
 		result.append("(set-option :produce-models true)\n");
@@ -47,8 +44,24 @@ public class VCGenerator {
 		
 		result.append("\n(check-sat)\n");
                 
-                try (PrintStream out = new PrintStream(new FileOutputStream("smt_format.txt"))) {
-                    out.print(result);
+                if(DEBUG_MODE) {
+                    if (!Files.exists(Paths.get("output")))
+                        Files.createDirectory(Paths.get("output"));
+                
+                    String ssaFormatFile = "output" + File.separator + procedure.procedureName + "_ssa_format.txt";
+                    try (PrintStream out = new PrintStream(new FileOutputStream(ssaFormatFile))) {
+                        out.print(ssa.getText(fresh));
+                    }
+                
+                    String pseudoSmtFile = "output" + File.separator + procedure.procedureName + "_pseudo_smt.txt";
+                    try (PrintStream out = new PrintStream(new FileOutputStream(pseudoSmtFile))) {
+                        out.print(ssa.translateToPseudoSmt(fresh));
+                    }
+                
+                    String smtFile = "output" + File.separator + procedure.procedureName + "_smt_format.txt";
+                    try (PrintStream out = new PrintStream(new FileOutputStream(smtFile))) {
+                        out.print(result);
+                    }
                 }
                 
 		return result;
