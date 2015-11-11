@@ -45,8 +45,9 @@ public class VCGenerator {
 		result.append("\n(check-sat)\n");
                 
                 if(DEBUG_MODE) {
-                    if (!Files.exists(Paths.get("output")))
-                        Files.createDirectory(Paths.get("output"));
+                    deleteDirectory(new File("output"));
+                    Files.createDirectory(Paths.get("output"));
+                    
                 
                     String ssaFormatFile = "output" + File.separator + procedure.procedureName + "_ssa_format.txt";
                     try (PrintStream out = new PrintStream(new FileOutputStream(ssaFormatFile))) {
@@ -66,5 +67,18 @@ public class VCGenerator {
                 
 		return result;
 	}
+        
+        static public boolean deleteDirectory(File path) {
+            if( path.exists() ) {
+                File[] files = path.listFiles();
+                for(int i=0; i<files.length; i++) {
+                    if(files[i].isDirectory())
+                        deleteDirectory(files[i]);
+                    else
+                        files[i].delete();
+                }
+            }
+            return( path.delete() );
+        }
 
 }
