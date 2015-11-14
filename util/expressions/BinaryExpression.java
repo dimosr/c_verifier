@@ -3,7 +3,7 @@ package util.expressions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import tool.VariablesMapping;
+import tool.verif.structs.VariablesMapping;
 import util.misc.Tuple;
 import util.operators.BinaryOperator;
 

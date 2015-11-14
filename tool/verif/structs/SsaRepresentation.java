@@ -1,5 +1,6 @@
-package tool;
+package tool.verif.structs;
 
+import tool.verif.structs.FreshStructure;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,6 +28,8 @@ public class SsaRepresentation {
     private List<Assignment> assignments;
     private List<Assertion> assertions;
     private List<SsaAssertionMapping> assertionMappings;
+    
+    public static final String DEBUG_PRED_NAME = "debug_prop";
     
     public SsaRepresentation() {
         assignments = new ArrayList();
@@ -95,7 +98,7 @@ public class SsaRepresentation {
         return ssaFormula.toString();
     }
     
-    public String translateToSmtFormula(FreshStructure fresh) {
+    public String translateToSmtFormula(FreshStructure fresh, boolean findFailingPred) {
         StringBuilder smtFormula = new StringBuilder();
         
         /**  variables declarations  **/
@@ -109,6 +112,11 @@ public class SsaRepresentation {
         for(String variableName : localFreshMapping.keySet() ) {
             for(int i = 0; i <= localFreshMapping.get(variableName); i++) {
                 smtFormula.append("(declare-fun ").append(variableName).append(i).append(" () (_ BitVec 32)) \n");
+            }
+        }
+        if(findFailingPred) {
+            for(int i = 0; i < this.getAssertions().size(); i++) {
+                smtFormula.append("(declare-fun ").append(SsaRepresentation.DEBUG_PRED_NAME).append(i).append(" () (_ BitVec 32)) \n");
             }
         }
         
@@ -129,11 +137,26 @@ public class SsaRepresentation {
             for(Assertion assertion : this.getAssertions()) { 
                 smtFormula.append("(tobool ").append(getExpressionSMT(assertion.expression)).append(")\n");
             }
-            smtFormula.append("\n) ) )");
+            smtFormula.append(") ) )\n\n");
         }
         else {
             smtFormula.append("(assert (tobool (_ bv0 32)))\n");
         }
+        
+        StringBuilder debugPredicates = null;
+        if(findFailingPred) {
+            debugPredicates = new StringBuilder("(get-value");
+            for(int i = 0; i < this.getAssertions().size(); i++) {
+                Assertion assertion = this.getAssertions().get(i);
+                smtFormula.append("(assert(= ").append(SsaRepresentation.DEBUG_PRED_NAME).append(i).append(" ").append(getExpressionSMT(assertion.expression)).append("))\n");
+                debugPredicates.append(" ").append(SsaRepresentation.DEBUG_PRED_NAME).append(i);
+            }
+            debugPredicates.append(")");
+        }
+        
+        smtFormula.append("\n(check-sat)\n");
+        if(findFailingPred)
+            smtFormula.append(debugPredicates);
         
         return smtFormula.toString();
     }

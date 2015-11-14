@@ -1,7 +1,7 @@
 package util.expressions;
 
 import java.util.Map;
-import tool.VariablesMapping;
+import tool.verif.structs.VariablesMapping;
 
 public class ParenthesisExpression extends Expression {
     

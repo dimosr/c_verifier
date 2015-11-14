@@ -1,4 +1,4 @@
-package tool;
+package tool.verif.structs;
 
 import java.util.HashSet;
 import java.util.Set;

@@ -1,5 +1,10 @@
 package tool;
 
+import tool.verif.structs.SsaAssertionMapping;
+import tool.verif.structs.VariablesMapping;
+import tool.verif.structs.SsaRepresentation;
+import tool.verif.structs.ModifiedSet;
+import tool.verif.structs.FreshStructure;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.ProcedureDeclContext;
-import tool.SsaAssertionMapping.SourceType;
+import tool.verif.structs.SsaAssertionMapping.SourceType;
 import util.expressions.BinaryExpression;
 import util.expressions.ConstantExpression;
 import util.expressions.Expression;
