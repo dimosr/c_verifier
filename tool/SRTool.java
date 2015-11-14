@@ -1,26 +1,31 @@
 package tool;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
+import java.util.Scanner;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import parser.SimpleCLexer;
 import parser.SimpleCParser;
-import parser.SimpleCParser.ProcedureDeclContext;
 import parser.SimpleCParser.ProgramContext;
-import parser.SimpleCParser.VarDeclContext;
+import tool.VerificationResult.VerificationResultType;
+import tool.verif.structs.SsaAssertionMapping;
+import tool.verif.structs.SsaAssertionMapping.SourceType;
+import tool.verif.structs.SsaRepresentation;
 import util.ProcessExec;
 import util.ProcessTimeoutException;
+import util.program.Assertion;
+import util.program.EnsureCondition;
+import util.program.Invariant;
 import util.program.Procedure;
 import util.program.Program;
+import util.program.RequireCondition;
+import util.statement.AssertStatement;
 
 public class SRTool {
 
@@ -59,37 +64,98 @@ public class SRTool {
                 program.calculateAllModSets();
 		
                 VerifierVisitor verifierVisitor = new VerifierVisitor(program);
+                VerificationResult verificationResult;
 		for(Procedure procedure : program.procedures.values()) {
+                        verificationResult = null;
 			VCGenerator vcgen = new VCGenerator(program, procedure, verifierVisitor, DEBUG_MODE);
-			String vc = vcgen.generateVC().toString();
+			SsaRepresentation ssa = vcgen.generateVC();
+                        String vc = ssa.vc;
 
 			ProcessExec process = new ProcessExec("./z3", "-smt2", "-in");
-			String queryResult = "";
+                        String queryResult = "";
 			try {
 				queryResult = process.execute(vc, TIMEOUT);
 			} catch (ProcessTimeoutException e) {
-				System.out.println("UNKNOWN");
+                                verificationResult = new VerificationResult(VerificationResultType.UNKOWN);
+				System.out.println(VerificationResultType.UNKOWN.toString());
 				System.exit(1);
 			}
-			
-			if (queryResult.startsWith("sat")) {
-				System.out.println("INCORRECT");
-				System.exit(0);
-			}
-			
-			if (!queryResult.startsWith("unsat")) {
-				System.out.println("UNKNOWN");
-				System.out.println(queryResult);
-				System.exit(1);
-			}
+                        
+                        if(verificationResult == null) {
+                            verificationResult = parseSmtSolverResponse(queryResult);
+                        }
+                        
+                        if(verificationResult.isIncorrect()) {
+                            System.out.println(VerificationResultType.INCORRECT);
+                            printFailingAssertions(verificationResult.getFailingAssertionsIndexes(), ssa);
+                            System.exit(0);
+                        }
+                        else if(verificationResult.isUknown()) {
+                            System.out.println(VerificationResultType.UNKOWN);
+                            System.out.println(queryResult);
+                            System.exit(1);
+                        }
 		}
-		
-		System.out.println("CORRECT");
+                
+		System.out.println(VerificationResultType.CORRECT);
 		System.exit(0);
 		
     }
         
-    static public boolean deleteDirectory(File path) {
+    static private VerificationResult parseSmtSolverResponse(String solverResponse) {
+        VerificationResult verificationResult;
+        Scanner scanner = new Scanner(solverResponse);
+        String smtResult = scanner.nextLine();
+        if(smtResult.equals("sat"))
+            verificationResult = new VerificationResult(VerificationResultType.INCORRECT);
+        else if(smtResult.equals("unsat"))
+            verificationResult = new VerificationResult(VerificationResultType.CORRECT);
+        else
+            verificationResult = new VerificationResult(VerificationResultType.UNKOWN);
+        
+        if(verificationResult.isIncorrect()) {
+            while(scanner.hasNextLine()) {
+                String assertionValue = scanner.nextLine();
+                String[] temp = assertionValue.split(" #x");
+                String predicateName = temp[0];
+                String predicateValue = temp[1];
+                
+                int assertionIndex = Integer.parseInt(predicateName.substring(predicateName.indexOf(SsaRepresentation.DEBUG_PRED_NAME) + SsaRepresentation.DEBUG_PRED_NAME.length()));
+                boolean isPredFalse = predicateValue.contains("00000000");
+                
+                if(isPredFalse)
+                    verificationResult.addFailingAssertionIndex(assertionIndex);
+            }
+        }
+        
+        return verificationResult;
+    }
+    
+    static private void printFailingAssertions(List<Integer> assertionsIndexes, SsaRepresentation ssa) {
+        StringBuilder errorOut = new StringBuilder();
+        for(Integer index : assertionsIndexes) {
+            SsaAssertionMapping assertionMapping = ssa.getAssertionMapping(index);
+            if(assertionMapping.sourceType == SourceType.ASSERT) {
+                AssertStatement assertion = (AssertStatement) assertionMapping.source;
+                errorOut.append("Assertion ").append(ssa.getExpressionSsa(assertion.expression)).append(" failed \n");
+            }
+            else if(assertionMapping.sourceType == SourceType.ENSURES) {
+                EnsureCondition ensure = (EnsureCondition) assertionMapping.source;
+                errorOut.append("Pre-condition ").append(ssa.getExpressionSsa(ensure.expression)).append(" failed \n");
+            }
+            else if(assertionMapping.sourceType == SourceType.INVARIANT){
+                Invariant invariant = (Invariant) assertionMapping.source;
+                errorOut.append("Invariant ").append(ssa.getExpressionSsa(invariant.expression)).append(" failed \n");
+            }
+            else if(assertionMapping.sourceType == SourceType.REQUIRES){
+                RequireCondition require = (RequireCondition) assertionMapping.source;
+                errorOut.append("Require ").append(ssa.getExpressionSsa(require.expression)).append(" failed \n");
+            }
+        }
+        System.err.println(errorOut);
+    }
+        
+    static private boolean deleteDirectory(File path) {
         if( path.exists() ) {
             File[] files = path.listFiles();
             for(int i=0; i<files.length; i++) {

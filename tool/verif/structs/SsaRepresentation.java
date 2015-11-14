@@ -1,12 +1,8 @@
 package tool.verif.structs;
 
-import tool.verif.structs.FreshStructure;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import util.program.Assertion;
 import util.program.Assignment;
 import util.expressions.BinaryExpression;
@@ -17,8 +13,6 @@ import util.expressions.ParenthesisExpression;
 import util.expressions.TernaryExpression;
 import util.expressions.UnaryExpression;
 import util.expressions.VarRefExpression;
-import util.misc.Tuple;
-import util.operators.BinaryOperator;
 import util.operators.BinaryOperatorType;
 import util.operators.UnaryOperator;
 import util.operators.UnaryOperatorType;
@@ -29,12 +23,18 @@ public class SsaRepresentation {
     private List<Assertion> assertions;
     private List<SsaAssertionMapping> assertionMappings;
     
+    public String vc;
+    
     public static final String DEBUG_PRED_NAME = "debug_prop";
     
     public SsaRepresentation() {
         assignments = new ArrayList();
         assertions = new ArrayList();
         assertionMappings = new ArrayList();
+    }
+    
+    public SsaAssertionMapping getAssertionMapping(int index) {
+        return assertionMappings.get(index);
     }
     
     public void addAssertion(Assertion assertion, SsaAssertionMapping mapping) {
@@ -145,13 +145,13 @@ public class SsaRepresentation {
         
         StringBuilder debugPredicates = null;
         if(findFailingPred) {
-            debugPredicates = new StringBuilder("(get-value");
+            debugPredicates = new StringBuilder("(get-value (");
             for(int i = 0; i < this.getAssertions().size(); i++) {
                 Assertion assertion = this.getAssertions().get(i);
                 smtFormula.append("(assert(= ").append(SsaRepresentation.DEBUG_PRED_NAME).append(i).append(" ").append(getExpressionSMT(assertion.expression)).append("))\n");
-                debugPredicates.append(" ").append(SsaRepresentation.DEBUG_PRED_NAME).append(i);
+                debugPredicates.append(i == 0 ? "" : " ").append(SsaRepresentation.DEBUG_PRED_NAME).append(i);
             }
-            debugPredicates.append(")");
+            debugPredicates.append("))");
         }
         
         smtFormula.append("\n(check-sat)\n");
@@ -161,7 +161,7 @@ public class SsaRepresentation {
         return smtFormula.toString();
     }
     
-    private String getExpressionSsa(Expression expression) {
+    public String getExpressionSsa(Expression expression) {
         StringBuilder ssaFormula = new StringBuilder();
         
         if(expression.getType() == ExpressionType.BINARY){
@@ -201,7 +201,7 @@ public class SsaRepresentation {
         return ssaFormula.toString();
     }
 
-    private String getExpressionSMT(Expression expression) {
+    public String getExpressionSMT(Expression expression) {
         StringBuilder smtFormula = new StringBuilder();
         
         if(expression.getType() == ExpressionType.BINARY){
@@ -330,7 +330,7 @@ public class SsaRepresentation {
     }
     
     //SMT without tobool,tobv32 conversions
-    private String getExpressionPseudoSMT(Expression expression) {
+    public String getExpressionPseudoSMT(Expression expression) {
         StringBuilder smtFormula = new StringBuilder();
         
         if(expression.getType() == ExpressionType.BINARY){

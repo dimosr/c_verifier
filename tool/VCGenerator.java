@@ -6,20 +6,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Map;
-import java.util.Set;
-import parser.SimpleCBaseVisitor;
-import parser.SimpleCParser.ProcedureDeclContext;
-import util.program.Assertion;
-import util.program.Assignment;
 import util.program.Procedure;
 import util.program.Program;
 
 public class VCGenerator {
-    
-        
 
 	private Procedure procedure;
         private Program program;
@@ -34,7 +24,7 @@ public class VCGenerator {
                 this.debugMode = debugMode;
 	}
 	
-	public StringBuilder generateVC() throws FileNotFoundException, IOException {
+	public SsaRepresentation generateVC() throws FileNotFoundException, IOException {
                 verifierVisitor.visitProcedure(procedure);
                 FreshStructure fresh = verifierVisitor.getFreshStructure();
                 SsaRepresentation ssa = verifierVisitor.getSsa();
@@ -44,7 +34,7 @@ public class VCGenerator {
 		result.append("(define-fun tobv32 ((p Bool)) (_ BitVec 32) (ite p (_ bv1 32) (_ bv0 32)))\n");
 		result.append("(define-fun tobool ((p (_ BitVec 32))) Bool (ite (= p (_ bv0 32)) false true))\n");
 		
-                result.append(ssa.translateToSmtFormula(fresh, false));
+                result.append(ssa.translateToSmtFormula(fresh, true));
                 
                 if(debugMode) {
                     String ssaFormatFile = "output" + File.separator + procedure.procedureName + "_ssa_format.txt";
@@ -63,7 +53,8 @@ public class VCGenerator {
                     }
                 }
                 
-		return result;
+                ssa.vc = result.toString();
+		return ssa;
 	}
         
         
