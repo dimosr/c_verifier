@@ -338,17 +338,32 @@ public class VerifierVisitor {
                 loopGeneratedIf = false;
             }
             else if(loopStrategy == LoopStrategy.SIMPLE_BMC) {
+                
+                /* Initialised block */
                 AssumeStatement assumeFalse = new AssumeStatement(new ConstantExpression("0"));
-                BlockStatement innerBlock = new BlockStatement();
-                innerBlock.statements.add(assumeFalse);
-                IfStatement ifStmt = new IfStatement(stmt.loopCondition, innerBlock);
-                for(int i = 0; i < unwindingDepth; i++) {
-                    innerBlock = new BlockStatement();
-                    innerBlock.statements.add(stmt.blockStatement);
-                    innerBlock.statements.add((Statement) ifStmt);
-                    ifStmt = new IfStatement(stmt.loopCondition, innerBlock);
+                BlockStatement ifBlock = new BlockStatement();
+                ifBlock.statements.add(assumeFalse);
+                IfStatement ifStmt = new IfStatement(stmt.loopCondition, ifBlock);
+                BlockStatement unwindingBlock = new BlockStatement();
+                for(Invariant invariant : stmt.invariants) {
+                    unwindingBlock.statements.add(new AssertStatement(invariant.expression));
                 }
-                visitStmt(ifStmt);
+                unwindingBlock.statements.add(ifStmt);
+                
+                /* Loop unwinding */
+                for(int i = 0; i < unwindingDepth; i++) {
+                    ifBlock = new BlockStatement();
+                    ifBlock.statements.add(stmt.blockStatement);
+                    ifBlock.statements.add((Statement) unwindingBlock);
+                    ifStmt = new IfStatement(stmt.loopCondition, ifBlock);
+                    
+                    unwindingBlock = new BlockStatement();
+                    for(Invariant invariant : stmt.invariants) {
+                        unwindingBlock.statements.add(new AssertStatement(invariant.expression));
+                    }
+                    unwindingBlock.statements.add(ifStmt);
+                }
+                visitStmt(unwindingBlock);
             }
         }
         

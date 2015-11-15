@@ -32,6 +32,7 @@ public class SRTool {
 
     private static final int TIMEOUT = 30;
     private static final boolean DEBUG_MODE = false;
+    private static final String Z3_PATH = "./z3";
 
 	public static void main(String[] args) throws IOException, InterruptedException {
         String filename = args[0];
@@ -67,6 +68,12 @@ public class SRTool {
                 VerifierVisitor verifierVisitor = new VerifierVisitor(program);
                 VerificationResult verificationResult;
                 
+                verificationResult = executeSimpleSummarisation(program, verifierVisitor);
+                if(verificationResult.isCorrect()) {
+                    System.out.println(VerificationResultType.CORRECT);
+                    System.exit(0);
+                }
+                
                 verificationResult = executeHoudiniAlgorithm(program, verifierVisitor);
                 if(verificationResult.isCorrect()) {
                     System.out.println(VerificationResultType.CORRECT);
@@ -78,7 +85,7 @@ public class SRTool {
                         System.exit(0);
                     } 
                     else {
-                        verificationResult = executeBoundedModelChecking(program, verifierVisitor, 15);
+                        verificationResult = incrementalSoundBoundModelChecking(program, verifierVisitor, 20, 160);
                         if(verificationResult.isIncorrect()) {
                             System.out.println(VerificationResultType.INCORRECT);
                             System.exit(0);
@@ -93,6 +100,39 @@ public class SRTool {
                 
 		
     }
+        
+    static private VerificationResult executeSimpleSummarisation(Program program, VerifierVisitor verifierVisitor) throws IOException, InterruptedException {
+        VerificationResult verificationResult;
+        ProcessExec process = new ProcessExec(Z3_PATH, "-smt2", "-in");
+        for(Procedure procedure : program.procedures.values()) {
+            verificationResult = null;
+            VCGenerator vcgen = new VCGenerator(program, procedure, verifierVisitor, DEBUG_MODE);
+            SsaRepresentation ssa = vcgen.generateVC(LoopStrategy.LOOP_SUMMARISATION, 0);
+            String vc = ssa.vc;
+            String queryResult = "";
+            try {
+		queryResult = process.execute(vc, TIMEOUT);
+            } catch (ProcessTimeoutException e) {
+		System.out.println(VerificationResultType.UNKOWN);
+		System.exit(1);
+            }
+            
+            if(verificationResult == null) {
+                verificationResult = parseSmtSolverResponse(queryResult);
+            }
+            if(verificationResult.isIncorrect()) {
+                verificationResult = new VerificationResult(VerificationResultType.INCORRECT);
+                return verificationResult;
+            }
+            else if(verificationResult.isUknown()) {
+                System.out.println(VerificationResultType.UNKOWN);
+                System.err.println(queryResult);
+                System.exit(1);
+            }
+        }
+        verificationResult = new VerificationResult(VerificationResultType.CORRECT);
+        return verificationResult;
+    }
     
     /**
      * Verifies all procedures :
@@ -105,7 +145,7 @@ public class SRTool {
     static private VerificationResult executeHoudiniAlgorithm(Program program, VerifierVisitor verifierVisitor) throws IOException, InterruptedException {
         boolean anyProcCandidateFailed, thisProcCandidateFailed, regularFailed;
         VerificationResult verificationResult;
-        ProcessExec process = new ProcessExec("./z3", "-smt2", "-in");
+        ProcessExec process = new ProcessExec(Z3_PATH, "-smt2", "-in");
         
         do {
             regularFailed = false;
@@ -158,10 +198,11 @@ public class SRTool {
     }
     
     static private VerificationResult executeBoundedModelChecking(Program program, VerifierVisitor verifierVisitor, int width) throws IOException, InterruptedException {
-        VerificationResult verificationResult = null;
+        VerificationResult verificationResult;
         
-        ProcessExec process = new ProcessExec("./z3", "-smt2", "-in");
+        ProcessExec process = new ProcessExec(Z3_PATH, "-smt2", "-in");
         for(Procedure procedure : program.procedures.values()) {
+            verificationResult = null;
             VCGenerator vcgen = new VCGenerator(program, procedure, verifierVisitor, false);
             SsaRepresentation ssa = vcgen.generateVC(LoopStrategy.SIMPLE_BMC, width);
             String vc = ssa.vc;
@@ -191,6 +232,18 @@ public class SRTool {
         }
         
         verificationResult = new VerificationResult(VerificationResultType.CORRECT);
+        return verificationResult;
+    }
+    
+    static private VerificationResult incrementalSoundBoundModelChecking(Program program, VerifierVisitor verifierVisitor, int startingWidth, int maxWidth) throws IOException, InterruptedException {
+        VerificationResult verificationResult = null;
+        int width = startingWidth;
+        while(width <= maxWidth) {
+            verificationResult = executeBoundedModelChecking(program, verifierVisitor, width);
+            if(verificationResult.isIncorrect())
+                return verificationResult;
+            width *= 2;
+        }
         return verificationResult;
     }
         
