@@ -5,10 +5,11 @@ int foo() {
 
     int x;
     int y;
+    int z;
     x = 20;
     y = x - 5*4;
+    z = (x ^ y) | x;
     assert (y - 10 ) == 50;
-    int z;
     int k;
     k = 2;
     k = (2 + x)*k;

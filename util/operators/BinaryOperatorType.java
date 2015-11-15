@@ -61,6 +61,9 @@ public enum BinaryOperatorType {
                this == BinaryOperatorType.MINUS ||
                this == BinaryOperatorType.MULT ||
                this == BinaryOperatorType.DIV ||
+               this == BinaryOperatorType.BOR ||
+               this == BinaryOperatorType.BXOR ||
+               this == BinaryOperatorType.BAND ||
                this == BinaryOperatorType.MOD);
     }
     
@@ -76,9 +79,6 @@ public enum BinaryOperatorType {
     public boolean isBoolInputBoolOutput() {
         return (this == BinaryOperatorType.LOR ||
                this == BinaryOperatorType.LAND ||
-               this == BinaryOperatorType.BOR ||
-               this == BinaryOperatorType.BXOR ||
-               this == BinaryOperatorType.BAND) ||
-               this == BinaryOperatorType.IMPLIES;
+               this == BinaryOperatorType.IMPLIES);
     }
 }
