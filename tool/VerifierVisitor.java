@@ -57,6 +57,9 @@ public class VerifierVisitor {
         private Program program;
         private Procedure procedure;
         
+        private boolean loopGeneratedIf = false;
+        private List<Invariant> loopGeneratedInvariants;
+        
         public SsaRepresentation getSsa(){
             return ssa;
         }
@@ -229,6 +232,11 @@ public class VerifierVisitor {
             mapping = mapping1;
             modSet = new ModifiedSet();
             visitStmt(stmt.ifStatement);
+            if(loopGeneratedIf) {               /* loop summarization */
+                for(Invariant invariant : loopGeneratedInvariants)
+                    executeAssertionExpression(invariant.expression.applyMappings(mapping, procedure.returnExpression), invariant, loopGeneratedInvariants, SourceType.INVARIANT);
+                executeAssumeExpression(new ConstantExpression("0"));
+            }
             mapping1 = mapping;
             ModifiedSet modSet1 = modSet;
             
@@ -317,11 +325,11 @@ public class VerifierVisitor {
                 executeAssumeExpression(invariant.expression.applyMappings(mapping, procedure.returnExpression));
             
             BlockStatement generatedIfBlock = new BlockStatement(stmt.blockStatement.statements);
-            for(Invariant invariant : stmt.invariants)
-                generatedIfBlock.statements.add(new AssertStatement(invariant.expression));
-            generatedIfBlock.statements.add(new AssumeStatement(new ConstantExpression("0")));     //assume false
+            loopGeneratedIf = true;
+            loopGeneratedInvariants = stmt.invariants;
             IfStatement ifStmt = new IfStatement(stmt.loopCondition, generatedIfBlock);
             visitStmt(ifStmt);
+            loopGeneratedIf = false;
             /** Using loop summarization **/
         }
         

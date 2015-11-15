@@ -16,6 +16,10 @@ public class Invariant {
         this.isCandidate = true;
     }
     
+    public void setAsRegular() {
+        this.isCandidate = false;
+    }
+    
     public boolean isCandidate() {
         return isCandidate;
     }

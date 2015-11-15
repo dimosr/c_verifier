@@ -15,6 +15,10 @@ public class EnsureCondition {
         this.isCandidate = true;
     }
     
+    public void setAsRegular() {
+        this.isCandidate = false;
+    }
+    
     public boolean isCandidate() {
         return isCandidate;
     }

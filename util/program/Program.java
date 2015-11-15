@@ -1,8 +1,5 @@
 package util.program;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -10,10 +7,14 @@ import java.util.Set;
 public class Program {
     public Set<String> globalVariables;
     public Map<String, Procedure> procedures;
+    public Map<String, Set<String>> calledBy;
+    public boolean hasLoops;
     
-    public Program(Set<String> globalVariables, Map<String, Procedure> procedures) {
+    public Program(Set<String> globalVariables, Map<String, Procedure> procedures, Map<String, Set<String>> calledBy, boolean hasLoops) {
         this.globalVariables = globalVariables;
         this.procedures = procedures; 
+        this.calledBy = calledBy;
+        this.hasLoops = hasLoops;
     }
     
     public void calculateAllModSets() {
@@ -29,5 +30,9 @@ public class Program {
                 }
             }
         } while(!modSetsFinalised);
+    }
+    
+    public boolean hasLoops() {
+        return hasLoops;
     }
 }

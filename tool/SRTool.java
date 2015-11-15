@@ -65,7 +65,35 @@ public class SRTool {
 		
                 VerifierVisitor verifierVisitor = new VerifierVisitor(program);
                 VerificationResult verificationResult;
-		for(Procedure procedure : program.procedures.values()) {
+                
+                verificationResult = executeHoudiniAlgorithm(program, verifierVisitor);
+                if(verificationResult.isCorrect()) {
+                    System.out.println(VerificationResultType.CORRECT);
+                    System.exit(0);
+                }
+                else if(verificationResult.isIncorrect()) {
+                    if(!program.hasLoops()) {
+                        System.out.println(VerificationResultType.INCORRECT);
+                        System.exit(0);
+                    } 
+                    else {
+                        //verificationResult = executeBoundedModelChecking(program, verifierVisitor);
+                        System.out.println("Not reachable");
+                        System.exit(0);
+                        if(verificationResult.isIncorrect()) {
+                            System.out.println(VerificationResultType.INCORRECT);
+                            System.exit(0);
+                        }
+                        else {
+                            System.out.println(VerificationResultType.UNKOWN);      //static verification has false positives
+                            System.exit(1);
+                        }
+                        
+                    }
+                }
+                
+                
+		/*for(Procedure procedure : program.procedures.values()) {
                         verificationResult = null;
 			VCGenerator vcgen = new VCGenerator(program, procedure, verifierVisitor, DEBUG_MODE);
 			SsaRepresentation ssa = vcgen.generateVC();
@@ -77,7 +105,7 @@ public class SRTool {
 				queryResult = process.execute(vc, TIMEOUT);
 			} catch (ProcessTimeoutException e) {
                                 verificationResult = new VerificationResult(VerificationResultType.UNKOWN);
-				System.out.println(VerificationResultType.UNKOWN.toString());
+				System.out.println(VerificationResultType.UNKOWN);
 				System.exit(1);
 			}
                         
@@ -92,14 +120,78 @@ public class SRTool {
                         }
                         else if(verificationResult.isUknown()) {
                             System.out.println(VerificationResultType.UNKOWN);
-                            System.out.println(queryResult);
+                            System.err.println(queryResult);
                             System.exit(1);
                         }
-		}
+		}*/
                 
 		System.out.println(VerificationResultType.CORRECT);
 		System.exit(0);
 		
+    }
+    
+    /**
+     * Verifies all procedures :
+     *      - whenever a procedure fails due to candidate condition-invariant, remove it
+     *      - if a procedure fails due to a regular condition-invariant, flag it as incorrect
+     * Returns :
+     *      - correct, having removed all failing candidates, leaving only the regular ones
+     *      - incorrect (possible false positive, due to sound algorithm), having removed several candidates 
+     */
+    static private VerificationResult executeHoudiniAlgorithm(Program program, VerifierVisitor verifierVisitor) throws IOException, InterruptedException {
+        boolean anyProcCandidateFailed, thisProcCandidateFailed, regularFailed;
+        VerificationResult verificationResult;
+        ProcessExec process = new ProcessExec("./z3", "-smt2", "-in");
+        
+        do {
+            regularFailed = false;
+            anyProcCandidateFailed = false;
+            for(Procedure procedure : program.procedures.values()) {
+                do {
+                    thisProcCandidateFailed = false;
+                    VCGenerator vcgen = new VCGenerator(program, procedure, verifierVisitor, false);
+                    SsaRepresentation ssa = vcgen.generateVC();
+                    String vc = ssa.vc;
+                    
+                    String queryResult = "";
+                    verificationResult = null;
+                    try {
+			queryResult = process.execute(vc, TIMEOUT);
+                    } catch (ProcessTimeoutException e) {
+                        verificationResult = new VerificationResult(VerificationResultType.UNKOWN);
+			System.out.println(VerificationResultType.UNKOWN);
+			System.exit(1);
+                    }
+                    
+                    if(verificationResult == null) {
+                        verificationResult = parseSmtSolverResponse(queryResult);
+                    }
+                        
+                    if(verificationResult.isIncorrect()) {
+                        int candidatesFailed = removeCandidateFailingAssertions(verificationResult.getFailingAssertionsIndexes(), ssa);
+                        if(candidatesFailed > 0) {
+                            thisProcCandidateFailed = true;
+                            anyProcCandidateFailed = true;
+                        }
+                        else
+                            regularFailed = true;
+                    }
+                    else if(verificationResult.isUknown()) {
+                        System.out.println(VerificationResultType.UNKOWN);
+                        System.err.println(queryResult);
+                        System.exit(1);
+                    }
+                    
+                } while(thisProcCandidateFailed);
+            }
+        } while(anyProcCandidateFailed);
+        
+        if(regularFailed) 
+            verificationResult = new VerificationResult(VerificationResultType.INCORRECT);
+        else
+            verificationResult = new VerificationResult(VerificationResultType.CORRECT);
+        
+        return verificationResult;
     }
         
     static private VerificationResult parseSmtSolverResponse(String solverResponse) {
@@ -129,6 +221,38 @@ public class SRTool {
         }
         
         return verificationResult;
+    }
+    
+    static private int removeCandidateFailingAssertions(List<Integer> assertionsIndexes, SsaRepresentation ssa) {
+        int removedSum = 0;
+        for(Integer index : assertionsIndexes) {
+            SsaAssertionMapping assertionMapping = ssa.getAssertionMapping(index);
+            if(assertionMapping.sourceType == SourceType.ENSURES) {
+                EnsureCondition ensure = (EnsureCondition) assertionMapping.source;
+                if(ensure.isCandidate) {
+                    List holder = assertionMapping.holder;
+                    holder.remove(ensure);
+                    removedSum++;
+                }
+            }
+            else if(assertionMapping.sourceType == SourceType.INVARIANT){
+                Invariant invariant = (Invariant) assertionMapping.source;
+                if(invariant.isCandidate) {
+                    List holder = assertionMapping.holder;
+                    holder.remove(invariant);
+                    removedSum++;
+                }
+            }
+            else if(assertionMapping.sourceType == SourceType.REQUIRES){
+                RequireCondition require = (RequireCondition) assertionMapping.source;
+                if(require.isCandidate) {
+                    List holder = assertionMapping.holder;
+                    holder.remove(require);
+                    removedSum++;
+                }
+            }
+        }
+        return removedSum;
     }
     
     static private void printFailingAssertions(List<Integer> assertionsIndexes, SsaRepresentation ssa) {

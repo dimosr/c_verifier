@@ -49,6 +49,9 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
         private String invariantType;
         
         private Program program;
+        private String procedureName;
+        private Map<String, Set<String>> calledBy;
+        private boolean hasLoops;
         
         private List<String> procedureLocalVariables;
         
@@ -60,6 +63,8 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
         @Override
         public Void visitProgram(ProgramContext ctx) {
             Set<String> globalVariables = new HashSet();
+            calledBy = new HashMap();
+            hasLoops = false;
             for(VarDeclContext varDecl : ctx.globals) {
 		globalVariables.add(varDecl.ident.name.getText());
             }
@@ -70,13 +75,13 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                 procedures.put(procedureHolder.procedureName, procedureHolder);
             }
             
-            program = new Program(globalVariables, procedures);
+            program = new Program(globalVariables, procedures, calledBy, hasLoops);
             return null;
         }
         
         @Override
 	public Void visitProcedureDecl(ProcedureDeclContext ctx) {
-            String procedureName = ctx.name.getText();
+            procedureName = ctx.name.getText();
             List<String> parameters = new ArrayList();
             List<RequireCondition> preConditions = new ArrayList();
             List<EnsureCondition> postConditions = new ArrayList();
@@ -611,19 +616,31 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
         @Override
         public Void visitCallStmt(CallStmtContext ctx) {
             String variableName = ctx.lhs.ident.name.getText();
-            String procedureName = ctx.callee.getText();
+            String calledProcedureName = ctx.callee.getText();
             List<Expression> parameters = new ArrayList();
             for(ExprContext exprCtx : ctx.actuals) {
                 visitExpr(exprCtx);
                 parameters.add(expressionHolder);
             }
-            CallStatement callStmt = new CallStatement(variableName, procedureName, parameters);
+            CallStatement callStmt = new CallStatement(variableName, calledProcedureName, parameters);
             statementHolder = callStmt;
+            
+            if(!calledBy.containsKey(calledProcedureName)) {
+                Set<String> callers = new HashSet();
+                callers.add(procedureName);
+                calledBy.put(calledProcedureName, callers);
+            }
+            else {
+                 Set<String> callers = calledBy.get(calledProcedureName);
+                 callers.add(procedureName);
+            }
+           
             return null;
         }
         
         @Override
         public Void visitWhileStmt(WhileStmtContext ctx) {
+            hasLoops = true;
             visitExpr(ctx.condition);
             Expression loopCondition = expressionHolder;
             
