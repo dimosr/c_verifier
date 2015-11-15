@@ -92,39 +92,6 @@ public class SRTool {
                     }
                 }
                 
-                
-		/*for(Procedure procedure : program.procedures.values()) {
-                        verificationResult = null;
-			VCGenerator vcgen = new VCGenerator(program, procedure, verifierVisitor, DEBUG_MODE);
-			SsaRepresentation ssa = vcgen.generateVC();
-                        String vc = ssa.vc;
-
-			ProcessExec process = new ProcessExec("./z3", "-smt2", "-in");
-                        String queryResult = "";
-			try {
-				queryResult = process.execute(vc, TIMEOUT);
-			} catch (ProcessTimeoutException e) {
-                                verificationResult = new VerificationResult(VerificationResultType.UNKOWN);
-				System.out.println(VerificationResultType.UNKOWN);
-				System.exit(1);
-			}
-                        
-                        if(verificationResult == null) {
-                            verificationResult = parseSmtSolverResponse(queryResult);
-                        }
-                        
-                        if(verificationResult.isIncorrect()) {
-                            System.out.println(VerificationResultType.INCORRECT);
-                            printFailingAssertions(verificationResult.getFailingAssertionsIndexes(), ssa);
-                            System.exit(0);
-                        }
-                        else if(verificationResult.isUknown()) {
-                            System.out.println(VerificationResultType.UNKOWN);
-                            System.err.println(queryResult);
-                            System.exit(1);
-                        }
-		}*/
-                
 		System.out.println(VerificationResultType.CORRECT);
 		System.exit(0);
 		
