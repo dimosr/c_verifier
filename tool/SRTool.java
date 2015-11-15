@@ -14,6 +14,7 @@ import parser.SimpleCLexer;
 import parser.SimpleCParser;
 import parser.SimpleCParser.ProgramContext;
 import tool.VerificationResult.VerificationResultType;
+import tool.verif.structs.LoopStrategy;
 import tool.verif.structs.SsaAssertionMapping;
 import tool.verif.structs.SsaAssertionMapping.SourceType;
 import tool.verif.structs.SsaRepresentation;
@@ -30,7 +31,7 @@ import util.statement.AssertStatement;
 public class SRTool {
 
     private static final int TIMEOUT = 30;
-    private static final boolean DEBUG_MODE = true;
+    private static final boolean DEBUG_MODE = false;
 
 	public static void main(String[] args) throws IOException, InterruptedException {
         String filename = args[0];
@@ -77,9 +78,7 @@ public class SRTool {
                         System.exit(0);
                     } 
                     else {
-                        //verificationResult = executeBoundedModelChecking(program, verifierVisitor);
-                        System.out.println("Not reachable");
-                        System.exit(0);
+                        verificationResult = executeBoundedModelChecking(program, verifierVisitor, 15);
                         if(verificationResult.isIncorrect()) {
                             System.out.println(VerificationResultType.INCORRECT);
                             System.exit(0);
@@ -92,8 +91,6 @@ public class SRTool {
                     }
                 }
                 
-		System.out.println(VerificationResultType.CORRECT);
-		System.exit(0);
 		
     }
     
@@ -117,7 +114,7 @@ public class SRTool {
                 do {
                     thisProcCandidateFailed = false;
                     VCGenerator vcgen = new VCGenerator(program, procedure, verifierVisitor, false);
-                    SsaRepresentation ssa = vcgen.generateVC();
+                    SsaRepresentation ssa = vcgen.generateVC(LoopStrategy.LOOP_SUMMARISATION, 0);
                     String vc = ssa.vc;
                     
                     String queryResult = "";
@@ -125,7 +122,6 @@ public class SRTool {
                     try {
 			queryResult = process.execute(vc, TIMEOUT);
                     } catch (ProcessTimeoutException e) {
-                        verificationResult = new VerificationResult(VerificationResultType.UNKOWN);
 			System.out.println(VerificationResultType.UNKOWN);
 			System.exit(1);
                     }
@@ -158,6 +154,43 @@ public class SRTool {
         else
             verificationResult = new VerificationResult(VerificationResultType.CORRECT);
         
+        return verificationResult;
+    }
+    
+    static private VerificationResult executeBoundedModelChecking(Program program, VerifierVisitor verifierVisitor, int width) throws IOException, InterruptedException {
+        VerificationResult verificationResult = null;
+        
+        ProcessExec process = new ProcessExec("./z3", "-smt2", "-in");
+        for(Procedure procedure : program.procedures.values()) {
+            VCGenerator vcgen = new VCGenerator(program, procedure, verifierVisitor, false);
+            SsaRepresentation ssa = vcgen.generateVC(LoopStrategy.SIMPLE_BMC, width);
+            String vc = ssa.vc;
+            
+            String queryResult = "";
+            verificationResult = null;
+            try {
+		queryResult = process.execute(vc, TIMEOUT);
+            } catch (ProcessTimeoutException e) {
+		System.out.println(VerificationResultType.UNKOWN);
+		System.exit(1);
+            }
+                    
+            if(verificationResult == null) {
+                verificationResult = parseSmtSolverResponse(queryResult);
+            }
+            
+            if(verificationResult.isIncorrect()) {
+                verificationResult = new VerificationResult(VerificationResultType.INCORRECT);
+                return verificationResult;
+            }
+            else if(verificationResult.isUknown()) {
+                System.out.println(VerificationResultType.UNKOWN);
+                System.err.println(queryResult);
+                System.exit(1);
+            }
+        }
+        
+        verificationResult = new VerificationResult(VerificationResultType.CORRECT);
         return verificationResult;
     }
         

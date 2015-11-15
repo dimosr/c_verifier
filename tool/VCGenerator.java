@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import tool.verif.structs.LoopStrategy;
 import util.program.Procedure;
 import util.program.Program;
 
@@ -24,8 +25,8 @@ public class VCGenerator {
                 this.debugMode = debugMode;
 	}
 	
-	public SsaRepresentation generateVC() throws FileNotFoundException, IOException {
-                verifierVisitor.visitProcedure(procedure);
+	public SsaRepresentation generateVC(LoopStrategy loopStrategy, int unwindingDepth) throws FileNotFoundException, IOException {
+                verifierVisitor.visitProcedure(procedure, loopStrategy, unwindingDepth);
                 FreshStructure fresh = verifierVisitor.getFreshStructure();
                 SsaRepresentation ssa = verifierVisitor.getSsa();
                 

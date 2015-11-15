@@ -1,5 +1,6 @@
 package util.statement;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -8,9 +9,14 @@ import util.program.Program;
 
 public class BlockStatement extends Statement {
     public List<Statement> statements;
+
     
     public BlockStatement(List<Statement> statements) {
         this.statements = statements;
+    }
+    
+    public BlockStatement() {
+        this.statements = new ArrayList();
     }
     
     public StatementType getType() {

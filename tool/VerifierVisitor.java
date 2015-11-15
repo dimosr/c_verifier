@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.ProcedureDeclContext;
+import tool.verif.structs.LoopStrategy;
 import tool.verif.structs.SsaAssertionMapping.SourceType;
 import util.expressions.BinaryExpression;
 import util.expressions.ConstantExpression;
@@ -60,6 +61,9 @@ public class VerifierVisitor {
         private boolean loopGeneratedIf = false;
         private List<Invariant> loopGeneratedInvariants;
         
+        private LoopStrategy loopStrategy;
+        private int unwindingDepth;
+        
         public SsaRepresentation getSsa(){
             return ssa;
         }
@@ -73,8 +77,10 @@ public class VerifierVisitor {
             this.program = program;
         }
         
-	public void visitProcedure(Procedure procedure) {
+	public void visitProcedure(Procedure procedure, LoopStrategy loopStrategy, int unwindingDepth) {
             this.procedure = procedure;
+            this.loopStrategy = loopStrategy;
+            this.unwindingDepth = unwindingDepth;
             
             freshStructure = new FreshStructure();
             ssa = new SsaRepresentation();
@@ -312,25 +318,38 @@ public class VerifierVisitor {
                 visitStmt(innerStmt);
         }
         
-        public void visitStmt(WhileStatement stmt) {
-            /** Using loop summarization **/
-            for(Invariant invariant : stmt.invariants)
-                executeAssertionExpression(invariant.expression.applyMappings(mapping, procedure.returnExpression), invariant, stmt.invariants, SourceType.INVARIANT);
+        public void visitStmt(WhileStatement stmt) { 
+            if(loopStrategy == LoopStrategy.LOOP_SUMMARISATION) {
+                for(Invariant invariant : stmt.invariants)
+                    executeAssertionExpression(invariant.expression.applyMappings(mapping, procedure.returnExpression), invariant, stmt.invariants, SourceType.INVARIANT);
             
-            Set<String> loopModSet = stmt.getModifiedSet(program, procedure.localVariables);
-            for(String variable : loopModSet)
-                visitStmt(new HavocStatement(variable));
+                Set<String> loopModSet = stmt.getModifiedSet(program, procedure.localVariables);
+                for(String variable : loopModSet)
+                    visitStmt(new HavocStatement(variable));
             
-            for(Invariant invariant : stmt.invariants)
-                executeAssumeExpression(invariant.expression.applyMappings(mapping, procedure.returnExpression));
+                for(Invariant invariant : stmt.invariants)
+                    executeAssumeExpression(invariant.expression.applyMappings(mapping, procedure.returnExpression));
             
-            BlockStatement generatedIfBlock = new BlockStatement(stmt.blockStatement.statements);
-            loopGeneratedIf = true;
-            loopGeneratedInvariants = stmt.invariants;
-            IfStatement ifStmt = new IfStatement(stmt.loopCondition, generatedIfBlock);
-            visitStmt(ifStmt);
-            loopGeneratedIf = false;
-            /** Using loop summarization **/
+                BlockStatement generatedIfBlock = new BlockStatement(stmt.blockStatement.statements);
+                loopGeneratedIf = true;
+                loopGeneratedInvariants = stmt.invariants;
+                IfStatement ifStmt = new IfStatement(stmt.loopCondition, generatedIfBlock);
+                visitStmt(ifStmt);
+                loopGeneratedIf = false;
+            }
+            else if(loopStrategy == LoopStrategy.SIMPLE_BMC) {
+                AssumeStatement assumeFalse = new AssumeStatement(new ConstantExpression("0"));
+                BlockStatement innerBlock = new BlockStatement();
+                innerBlock.statements.add(assumeFalse);
+                IfStatement ifStmt = new IfStatement(stmt.loopCondition, innerBlock);
+                for(int i = 0; i < unwindingDepth; i++) {
+                    innerBlock = new BlockStatement();
+                    innerBlock.statements.add(stmt.blockStatement);
+                    innerBlock.statements.add((Statement) ifStmt);
+                    ifStmt = new IfStatement(stmt.loopCondition, innerBlock);
+                }
+                visitStmt(ifStmt);
+            }
         }
         
         public void visitStmt(Statement stmt) {
