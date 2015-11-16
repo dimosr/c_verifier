@@ -13,6 +13,7 @@ import util.expressions.BinaryExpression;
 import util.expressions.ConstantExpression;
 
 import util.expressions.Expression;
+import util.expressions.ExpressionType;
 import util.expressions.OldExpression;
 import util.expressions.ParenthesisExpression;
 import util.expressions.ResultExpression;
@@ -283,6 +284,9 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                 
                 visitLandExpr(ctx.args.get(0));
                 Expression leftExpr = expressionHolder;
+                if( ( leftExpr.getType() == ExpressionType.CONSTANT ) && (((ConstantExpression)leftExpr).intValue == "1") ) {
+                    return null;    //short-circuit
+                }
                 expressionHolder = null;
                 for(int i = 1; i < ctx.args.size(); i++){
                     BinaryOperator op = new BinaryOperator(BinaryOperatorType.LOR);
@@ -308,6 +312,9 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                 
                 visitBorExpr(ctx.args.get(0));
                 Expression leftExpr = expressionHolder;
+                if( ( leftExpr.getType() == ExpressionType.CONSTANT ) && (((ConstantExpression)leftExpr).intValue == "0") ) {
+                    return null;    //short-circuit
+                }
                 expressionHolder = null;
                 for(int i = 1; i < ctx.args.size(); i++){
                     BinaryOperator op = new BinaryOperator(BinaryOperatorType.LAND);
