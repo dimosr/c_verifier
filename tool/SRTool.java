@@ -90,7 +90,11 @@ public class SRTool {
                             System.out.println(VerificationResultType.INCORRECT);
                             System.exit(0);
                         }
-                        else {
+                        else if(verificationResult.isCorrect()) {
+                            System.out.println(VerificationResultType.CORRECT);
+                            System.exit(0);
+                        }
+                        else if(verificationResult.isUknown()){
                             System.out.println(VerificationResultType.UNKOWN);      //static verification has false positives
                             System.exit(1);
                         }
@@ -204,7 +208,7 @@ public class SRTool {
         for(Procedure procedure : program.procedures.values()) {
             verificationResult = null;
             VCGenerator vcgen = new VCGenerator(program, procedure, verifierVisitor, false);
-            SsaRepresentation ssa = vcgen.generateVC(LoopStrategy.SIMPLE_BMC, width);
+            SsaRepresentation ssa = vcgen.generateVC(LoopStrategy.SOUND_BMC, width);
             String vc = ssa.vc;
             
             String queryResult = "";
@@ -221,6 +225,17 @@ public class SRTool {
             }
             
             if(verificationResult.isIncorrect()) {
+                /*  If achieved full unwinding */
+                if(verificationResult.getFailingAssertionsIndexes().size() == 1) {
+                    SsaAssertionMapping assertionMapping = ssa.getAssertionMapping(1);
+                    if(assertionMapping.sourceType == SourceType.ASSERT){
+                        AssertStatement assertStmt = (AssertStatement) assertionMapping.source;
+                        if(assertStmt.toString().equals(VerifierVisitor.BMC_SOUND_ASSERT.toString())) {
+                            verificationResult = new VerificationResult(VerificationResultType.UNKOWN);
+                            return verificationResult;
+                        }
+                    }
+                }
                 verificationResult = new VerificationResult(VerificationResultType.INCORRECT);
                 return verificationResult;
             }
@@ -240,11 +255,13 @@ public class SRTool {
         int width = startingWidth;
         while(width <= maxWidth) {
             verificationResult = executeBoundedModelChecking(program, verifierVisitor, width);
+            if(verificationResult.isCorrect())
+                return verificationResult;
             if(verificationResult.isIncorrect())
                 return verificationResult;
             width *= 2;
         }
-        return verificationResult;
+        return verificationResult;          
     }
         
     static private VerificationResult parseSmtSolverResponse(String solverResponse) {

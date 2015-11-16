@@ -64,6 +64,8 @@ public class VerifierVisitor {
         private LoopStrategy loopStrategy;
         private int unwindingDepth;
         
+        public static final Statement BMC_SOUND_ASSERT = new AssertStatement(new BinaryExpression(new ConstantExpression("0"), new BinaryOperator(BinaryOperatorType.LAND),new BinaryExpression(new ConstantExpression("42"), new BinaryOperator(BinaryOperatorType.EQUALS), new ConstantExpression("42"))));
+        
         public SsaRepresentation getSsa(){
             return ssa;
         }
@@ -202,7 +204,7 @@ public class VerifierVisitor {
             for(RequireCondition require : calledProcedure.preConditions) {
                 Expression expressionWithActualParams = require.expression.applySummarisationMappings(mapping, formalActualParamsMapping, returnVariable);
                 Expression evaluatedExpr = expressionWithActualParams.applyMappings(mapping, returnVariable);
-                executeAssertionExpression(evaluatedExpr, require, calledProcedure.preConditions, SourceType.ASSERT);
+                executeAssertionExpression(evaluatedExpr, require, calledProcedure.preConditions, SourceType.REQUIRES);
             }
             
             /** Summarization havocs **/
@@ -337,11 +339,13 @@ public class VerifierVisitor {
                 visitStmt(ifStmt);
                 loopGeneratedIf = false;
             }
-            else if(loopStrategy == LoopStrategy.SIMPLE_BMC) {
+            else if(loopStrategy == LoopStrategy.SIMPLE_BMC || loopStrategy == LoopStrategy.SOUND_BMC) {
                 
                 /* Initialised block */
                 AssumeStatement assumeFalse = new AssumeStatement(new ConstantExpression("0"));
                 BlockStatement ifBlock = new BlockStatement();
+                if(loopStrategy == LoopStrategy.SOUND_BMC)
+                    ifBlock.statements.add(BMC_SOUND_ASSERT);
                 ifBlock.statements.add(assumeFalse);
                 IfStatement ifStmt = new IfStatement(stmt.loopCondition, ifBlock);
                 BlockStatement unwindingBlock = new BlockStatement();
