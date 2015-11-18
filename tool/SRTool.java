@@ -35,9 +35,11 @@ public class SRTool {
     private static final String Z3_PATH = "./z3";
 
 	public static void main(String[] args) throws IOException, InterruptedException {
-        String filename = args[0];
+            
+            try{
+                String filename = args[0];
 		ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(filename));
-        SimpleCLexer lexer = new SimpleCLexer(input);
+                SimpleCLexer lexer = new SimpleCLexer(input);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		SimpleCParser parser = new SimpleCParser(tokens);
 		ProgramContext ctx = parser.program();
@@ -101,7 +103,10 @@ public class SRTool {
                         
                     }
                 }
-                
+            } catch(Exception e) {
+                System.out.println(VerificationResultType.UNKOWN);
+		System.exit(1);
+            }  
 		
     }
         
