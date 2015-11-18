@@ -232,7 +232,8 @@ public class SRTool {
             if(verificationResult.isIncorrect()) {
                 /*  If achieved full unwinding */
                 if(verificationResult.getFailingAssertionsIndexes().size() == 1) {
-                    SsaAssertionMapping assertionMapping = ssa.getAssertionMapping(1);
+                    Integer index = verificationResult.getFailingAssertionsIndexes().get(0);
+                    SsaAssertionMapping assertionMapping = ssa.getAssertionMapping(index);
                     if(assertionMapping.sourceType == SourceType.ASSERT){
                         AssertStatement assertStmt = (AssertStatement) assertionMapping.source;
                         if(assertStmt.toString().equals(VerifierVisitor.BMC_SOUND_ASSERT.toString())) {
