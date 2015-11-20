@@ -30,7 +30,7 @@ import util.statement.AssertStatement;
 
 public class SRTool {
 
-    private static final int TIMEOUT = 30;
+    private static final int TIMEOUT = 50;
     private static final boolean DEBUG_MODE = false;
     private static final String Z3_PATH = "./z3";
 
@@ -87,7 +87,7 @@ public class SRTool {
                         System.exit(0);
                     } 
                     else {
-                        verificationResult = incrementalSoundBoundModelChecking(program, verifierVisitor, 20, 160);
+                        verificationResult = incrementalSoundBoundModelChecking(program, verifierVisitor, 20, 320);
                         if(verificationResult.isIncorrect()) {
                             System.out.println(VerificationResultType.INCORRECT);
                             System.exit(0);

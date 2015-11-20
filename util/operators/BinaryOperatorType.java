@@ -13,7 +13,7 @@ public enum BinaryOperatorType {
     GREATER (">", "bvsgt"), 
     GREATER_EQUAL (">=", "bvsge"), 
     LEFT_SHIFT ("<<", "bvshl"), 
-    RIGHT_SHIFT ("<<", "bvashr"), 
+    RIGHT_SHIFT (">>", "bvashr"), 
     PLUS ("+", "bvadd"), 
     MINUS ("-", "bvsub"), 
     MULT ("*", "bvmul"), 

@@ -263,11 +263,11 @@ public class SsaRepresentation {
             long parenthesesSum = 0;
             
             for(UnaryOperator operator : unaryExpr.operators) {
-                if(operator.opType == UnaryOperatorType.MINUS){     // unary + can be omitted (optimization)
+                if( (operator.opType == UnaryOperatorType.MINUS) || (operator.opType == UnaryOperatorType.BNOT)){     // unary + can be omitted (optimization)
                     smtFormula.append("(").append(operator.opType.smtForm());
                     parenthesesSum++;
                 }
-                else if( (operator.opType == UnaryOperatorType.NOT) || (operator.opType == UnaryOperatorType.BNOT) ){
+                else if( operator.opType == UnaryOperatorType.NOT ){
                     smtFormula.append("(tobv32 (").append(operator.opType.smtForm()).append(" (tobool ");
                     parenthesesSum += 3;
                 }
@@ -376,11 +376,11 @@ public class SsaRepresentation {
         else if(expression.getType() == ExpressionType.UNARY) {
             UnaryExpression unaryExpr = (UnaryExpression) expression;
             
-            for(UnaryOperator operator : unaryExpr.operators) {
-                if(operator.opType == UnaryOperatorType.MINUS){     // unary + can be omitted (optimization)
+            for(UnaryOperator operator : unaryExpr.operators ) {
+                if((operator.opType == UnaryOperatorType.MINUS) || (operator.opType == UnaryOperatorType.BNOT)){     // unary + can be omitted (optimization)
                     smtFormula.append("(").append(operator.opType.smtForm());
                 }
-                else if( (operator.opType == UnaryOperatorType.NOT) || (operator.opType == UnaryOperatorType.BNOT) ){
+                else if(operator.opType == UnaryOperatorType.NOT){
                     smtFormula.append("(").append(operator.opType.smtForm()).append(" ");
                 }
             }

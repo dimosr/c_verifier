@@ -280,11 +280,11 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                 visitLandExpr(ctx.single);
             }
             else {
-                BinaryExpression binExpr = null;
+                Expression binExpr = null;
                 
                 visitLandExpr(ctx.args.get(0));
-                Expression leftExpr = expressionHolder;
-                if( ( leftExpr.getType() == ExpressionType.CONSTANT ) && (((ConstantExpression)leftExpr).intValue == "1") ) {
+                binExpr = expressionHolder;
+                if( ( binExpr.getType() == ExpressionType.CONSTANT ) && (((ConstantExpression)binExpr).intValue == "1") ) {
                     return null;    //short-circuit
                 }
                 expressionHolder = null;
@@ -294,7 +294,7 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                     Expression rightExpr = expressionHolder;
                     expressionHolder = null;
                     
-                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                    binExpr = new BinaryExpression(binExpr, op, rightExpr);
                 }
                 
                 expressionHolder = binExpr;
@@ -308,11 +308,11 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                 visitBorExpr(ctx.single);
             }
             else {
-                BinaryExpression binExpr = null;
+                Expression binExpr = null;
                 
                 visitBorExpr(ctx.args.get(0));
-                Expression leftExpr = expressionHolder;
-                if( ( leftExpr.getType() == ExpressionType.CONSTANT ) && (((ConstantExpression)leftExpr).intValue == "0") ) {
+                binExpr = expressionHolder;
+                if( ( binExpr.getType() == ExpressionType.CONSTANT ) && (((ConstantExpression)binExpr).intValue == "0") ) {
                     return null;    //short-circuit
                 }
                 expressionHolder = null;
@@ -322,7 +322,7 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                     Expression rightExpr = expressionHolder;
                     expressionHolder = null;
                     
-                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                    binExpr = new BinaryExpression(binExpr, op, rightExpr);
                 }
                 
                 expressionHolder = binExpr;
@@ -336,10 +336,10 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                 visitBxorExpr(ctx.single);
             }
             else {
-                BinaryExpression binExpr = null;
+                Expression binExpr = null;
                 
                 visitBxorExpr(ctx.args.get(0));
-                Expression leftExpr = expressionHolder;
+                binExpr = expressionHolder;
                 expressionHolder = null;
                 for(int i = 1; i < ctx.args.size(); i++){
                     BinaryOperator op = new BinaryOperator(BinaryOperatorType.BOR);
@@ -347,7 +347,7 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                     Expression rightExpr = expressionHolder;
                     expressionHolder = null;
                     
-                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                    binExpr = new BinaryExpression(binExpr, op, rightExpr);
                 }
                 
                 expressionHolder = binExpr;
@@ -361,10 +361,10 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                 visitBandExpr(ctx.single);
             }
             else {
-                BinaryExpression binExpr = null;
+                Expression binExpr = null;
                 
                 visitBandExpr(ctx.args.get(0));
-                Expression leftExpr = expressionHolder;
+                binExpr = expressionHolder;
                 expressionHolder = null;
                 for(int i = 1; i < ctx.args.size(); i++){
                     BinaryOperator op = new BinaryOperator(BinaryOperatorType.BXOR);
@@ -372,7 +372,7 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                     Expression rightExpr = expressionHolder;
                     expressionHolder = null;
                     
-                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                    binExpr = new BinaryExpression(binExpr, op, rightExpr);
                 }
                 
                 expressionHolder = binExpr;
@@ -386,10 +386,10 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                 visitEqualityExpr(ctx.single);
             }
             else{
-                BinaryExpression binExpr = null;
+                Expression binExpr = null;
                 
                 visitEqualityExpr(ctx.args.get(0));
-                Expression leftExpr = expressionHolder;
+                binExpr = expressionHolder;
                 expressionHolder = null;
                 for(int i = 1; i < ctx.args.size(); i++){
                     BinaryOperator op = new BinaryOperator(BinaryOperatorType.BAND);
@@ -397,7 +397,7 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                     Expression rightExpr = expressionHolder;
                     expressionHolder = null;
                     
-                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                    binExpr = new BinaryExpression(binExpr, op, rightExpr);
                 }
                 
                 expressionHolder = binExpr;
@@ -411,10 +411,10 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                 visitRelExpr(ctx.single);
             }
             else {
-                BinaryExpression binExpr = null;
+                Expression binExpr = null;
                 
                 visitRelExpr(ctx.args.get(0));
-                Expression leftExpr = expressionHolder;
+                binExpr = expressionHolder;
                 expressionHolder = null;
                 for(int i = 1; i < ctx.args.size(); i++){
                     String opString = ctx.ops.get(i-1).getText();
@@ -423,7 +423,7 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                     Expression rightExpr = expressionHolder;
                     expressionHolder = null;
                     
-                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                    binExpr = new BinaryExpression(binExpr, op, rightExpr);
                 }
                 
                 expressionHolder = binExpr;
@@ -437,10 +437,10 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                 visitShiftExpr(ctx.single);
             }
             else {
-                BinaryExpression binExpr = null;
+                Expression binExpr = null;
                 
                 visitShiftExpr(ctx.args.get(0));
-                Expression leftExpr = expressionHolder;
+                binExpr = expressionHolder;
                 expressionHolder = null;
                 for(int i = 1; i < ctx.args.size(); i++){
                     String opString = ctx.ops.get(i-1).getText();
@@ -449,7 +449,7 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                     Expression rightExpr = expressionHolder;
                     expressionHolder = null;
                     
-                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                    binExpr = new BinaryExpression(binExpr, op, rightExpr);
                 }
                 
                 expressionHolder = binExpr;
@@ -466,7 +466,7 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                 Expression binExpr = null;
                 
                 visitAddExpr(ctx.args.get(0));
-                Expression leftExpr = expressionHolder;
+                binExpr = expressionHolder;
                 expressionHolder = null;
                 for(int i = 1; i < ctx.args.size(); i++){
                     String opString = ctx.ops.get(i-1).getText();
@@ -475,15 +475,14 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                     Expression rightExpr = expressionHolder;
                     expressionHolder = null;
                     
-                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
                     if(op.opType == BinaryOperatorType.LEFT_SHIFT || op.opType == BinaryOperatorType.RIGHT_SHIFT) {
-                        BinaryExpression shiftExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                        BinaryExpression shiftExpr = new BinaryExpression(binExpr, op, rightExpr);
                         BinaryExpression checkZeroExpr = new BinaryExpression(rightExpr, new BinaryOperator(BinaryOperatorType.GREATER), new ConstantExpression("32"));
                         ParenthesisExpression parenthesisExpr = new ParenthesisExpression(new TernaryExpression(checkZeroExpr, new ConstantExpression("0"), shiftExpr));
                         binExpr = parenthesisExpr;
                     }
                     else{
-                        binExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                        binExpr = new BinaryExpression(binExpr, op, rightExpr);
                     }
                 }
                 
@@ -498,10 +497,10 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                 visitMulExpr(ctx.single);
             }
             else {
-                BinaryExpression binExpr = null;
+                Expression binExpr = null;
                 
                 visitMulExpr(ctx.args.get(0));
-                Expression leftExpr = expressionHolder;
+                binExpr = expressionHolder;
                 expressionHolder = null;
                 for(int i = 1; i < ctx.args.size(); i++){
                     String opString = ctx.ops.get(i-1).getText();
@@ -510,7 +509,7 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                     Expression rightExpr = expressionHolder;
                     expressionHolder = null;
                     
-                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                    binExpr = new BinaryExpression(binExpr, op, rightExpr);
                 }
                 
                 expressionHolder = binExpr;
@@ -528,7 +527,7 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                 Expression binExpr = null;
                 
                 visitUnaryExpr(ctx.args.get(0));
-                Expression leftExpr = expressionHolder;
+                binExpr = expressionHolder;
                 expressionHolder = null;
                 for(int i = 1; i < ctx.args.size(); i++){
                     String opString = ctx.ops.get(i-1).getText();
@@ -537,15 +536,14 @@ public class GeneratorVisitor extends SimpleCBaseVisitor<Void> {
                     Expression rightExpr = expressionHolder;
                     expressionHolder = null;
                     
-                    binExpr = new BinaryExpression(leftExpr, op, rightExpr);
                     if(op.opType == BinaryOperatorType.DIV || op.opType == BinaryOperatorType.MOD) {
-                        BinaryExpression divExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                        BinaryExpression divExpr = new BinaryExpression(binExpr, op, rightExpr);
                         BinaryExpression checkZeroExpr = new BinaryExpression(rightExpr, new BinaryOperator(BinaryOperatorType.EQUALS), new ConstantExpression("0"));
-                        ParenthesisExpression parenthesisExpr = new ParenthesisExpression(new TernaryExpression(checkZeroExpr, leftExpr, divExpr));
+                        ParenthesisExpression parenthesisExpr = new ParenthesisExpression(new TernaryExpression(checkZeroExpr, binExpr, divExpr));
                         binExpr = parenthesisExpr;
                     }
                     else{
-                        binExpr = new BinaryExpression(leftExpr, op, rightExpr);
+                        binExpr = new BinaryExpression(binExpr, op, rightExpr);
                     }
                 }
                 

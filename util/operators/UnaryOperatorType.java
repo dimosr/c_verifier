@@ -1,7 +1,7 @@
 package util.operators;
 
 public enum UnaryOperatorType {
-    PLUS ("+", "+"), 
+    PLUS ("+", "+"),        //not added in SMT
     MINUS ("-", "bvneg"), 
     NOT ("!", "not"), 
     BNOT ("~", "bvnot");
