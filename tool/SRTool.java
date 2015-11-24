@@ -6,6 +6,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -33,8 +40,25 @@ public class SRTool {
     private static final int TIMEOUT = 50;
     private static final boolean DEBUG_MODE = false;
     private static final String Z3_PATH = "./z3";
+    private static final int TOTAL_TIMEOUT = 175;
+    
+        public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Future<String> future = executor.submit(new Callable() {
+                public String call() throws Exception {
+                    execute(args);
+                    return "OK";
+                }
+            });
+            try {
+                future.get(TOTAL_TIMEOUT, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                System.err.println("Timeout!");
+            }
+            executor.shutdownNow();
+        }
 
-	public static void main(String[] args) throws IOException, InterruptedException {
+	public static void execute(String[] args) throws IOException, InterruptedException {
             
             try{
                 String filename = args[0];
