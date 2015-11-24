@@ -1,4 +1,5 @@
 package tool;
+import tool.VerificationResult.VerificationResultType;
 import tool.verif.structs.SsaRepresentation;
 import tool.verif.structs.FreshStructure;
 import java.io.File;
@@ -34,8 +35,12 @@ public class VCGenerator {
 		result.append("(set-option :produce-models true)\n");
 		result.append("(define-fun tobv32 ((p Bool)) (_ BitVec 32) (ite p (_ bv1 32) (_ bv0 32)))\n");
 		result.append("(define-fun tobool ((p (_ BitVec 32))) Bool (ite (= p (_ bv0 32)) false true))\n");
-		
-                result.append(ssa.translateToSmtFormula(fresh, true));
+				try {
+					result.append(ssa.translateToSmtFormula(fresh, true));
+				}  catch (OutOfMemoryError E) {
+            		System.out.println(VerificationResultType.UNKOWN);
+                    System.exit(1);
+            	}
                 
                 if(debugMode) {
                     String ssaFormatFile = "output" + File.separator + procedure.procedureName + "_ssa_format.txt";

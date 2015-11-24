@@ -3,6 +3,8 @@ package tool.verif.structs;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import tool.VerificationResult.VerificationResultType;
 import util.program.Assertion;
 import util.program.Assignment;
 import util.expressions.BinaryExpression;
@@ -134,8 +136,8 @@ public class SsaRepresentation {
         /**  assertions - MUST use prefix operators**/
         if( !this.getAssertions().isEmpty() ) {
             smtFormula.append("(assert (not (and \n");
-            for(Assertion assertion : this.getAssertions()) { 
-                smtFormula.append("(tobool ").append(getExpressionSMT(assertion.expression)).append(")\n");
+            for(Assertion assertion : this.getAssertions()) {
+            	smtFormula.append("(tobool ").append(getExpressionSMT(assertion.expression)).append(")\n");
             }
             smtFormula.append(") ) )\n\n");
         }

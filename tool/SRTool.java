@@ -129,7 +129,7 @@ public class SRTool {
                 }
             } catch(Exception e) {
                 System.out.println(VerificationResultType.UNKOWN);
-		System.exit(1);
+                System.exit(1);
             }  
 		
     }
@@ -145,9 +145,9 @@ public class SRTool {
             String queryResult = "";
             try {
 		queryResult = process.execute(vc, TIMEOUT);
-            } catch (ProcessTimeoutException e) {
-		System.out.println(VerificationResultType.UNKOWN);
-		System.exit(1);
+            } catch (Exception e)  {
+            	System.out.println(VerificationResultType.UNKOWN);
+            	System.exit(1);
             }
             
             if(verificationResult == null) {
@@ -194,7 +194,7 @@ public class SRTool {
                     verificationResult = null;
                     try {
 			queryResult = process.execute(vc, TIMEOUT);
-                    } catch (ProcessTimeoutException e) {
+                    } catch (Exception e) {
 			System.out.println(VerificationResultType.UNKOWN);
 			System.exit(1);
                     }
@@ -244,7 +244,7 @@ public class SRTool {
             verificationResult = null;
             try {
 		queryResult = process.execute(vc, TIMEOUT);
-            } catch (ProcessTimeoutException e) {
+            } catch (Exception e) {
 		System.out.println(VerificationResultType.UNKOWN);
 		System.exit(1);
             }
