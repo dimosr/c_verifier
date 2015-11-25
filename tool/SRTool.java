@@ -114,7 +114,7 @@ public class SRTool {
                         System.exit(0);
                     } 
                     else {
-                        verificationResult = incrementalSoundBoundModelChecking(program, verifierVisitor, 20, 320);
+                        verificationResult = incrementalSoundBoundModelChecking(program, verifierVisitor, 20, 2560);
                         if(verificationResult.isIncorrect()) {
                             System.out.println(VerificationResultType.INCORRECT);
                             System.exit(0);
