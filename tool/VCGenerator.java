@@ -35,10 +35,11 @@ public class VCGenerator {
 		result.append("(set-option :produce-models true)\n");
 		result.append("(define-fun tobv32 ((p Bool)) (_ BitVec 32) (ite p (_ bv1 32) (_ bv0 32)))\n");
 		result.append("(define-fun tobool ((p (_ BitVec 32))) Bool (ite (= p (_ bv0 32)) false true))\n");
-				try {
-					result.append(ssa.translateToSmtFormula(fresh, true));
-				}  catch (OutOfMemoryError E) {
-            		System.out.println(VerificationResultType.UNKOWN);
+		try {
+                    result.append(ssa.translateToSmtFormula(fresh, true));
+		}  catch (OutOfMemoryError E) {
+                    System.out.println(VerificationResultType.UNKOWN);
+                    System.err.println("Out of Memory!");
                     System.exit(1);
             	}
                 

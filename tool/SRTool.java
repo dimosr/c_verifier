@@ -52,7 +52,8 @@ public class SRTool {
             });
             try {
                 future.get(TOTAL_TIMEOUT, TimeUnit.SECONDS);
-            } catch (TimeoutException e) {
+            } 
+            catch (TimeoutException e) {
                 System.err.println("Timeout!");
             }
             executor.shutdownNow();
@@ -145,7 +146,7 @@ public class SRTool {
             String queryResult = "";
             try {
 		queryResult = process.execute(vc, TIMEOUT);
-            } catch (Exception e)  {
+            } catch (ProcessTimeoutException e)  {
             	System.out.println(VerificationResultType.UNKOWN);
             	System.exit(1);
             }
@@ -194,7 +195,7 @@ public class SRTool {
                     verificationResult = null;
                     try {
 			queryResult = process.execute(vc, TIMEOUT);
-                    } catch (Exception e) {
+                    } catch (ProcessTimeoutException e) {
 			System.out.println(VerificationResultType.UNKOWN);
 			System.exit(1);
                     }
@@ -244,7 +245,7 @@ public class SRTool {
             verificationResult = null;
             try {
 		queryResult = process.execute(vc, TIMEOUT);
-            } catch (Exception e) {
+            } catch (ProcessTimeoutException e) {
 		System.out.println(VerificationResultType.UNKOWN);
 		System.exit(1);
             }
