@@ -37,7 +37,7 @@ import util.statement.AssertStatement;
 
 public class SRTool {
 
-    private static final int TIMEOUT = 50;
+    private static final int TIMEOUT = 175;
     private static final boolean DEBUG_MODE = false;
     private static final String Z3_PATH = "./z3";
     private static final int TOTAL_TIMEOUT = 175;
@@ -54,7 +54,9 @@ public class SRTool {
                 future.get(TOTAL_TIMEOUT, TimeUnit.SECONDS);
             } 
             catch (TimeoutException e) {
+                System.out.println(VerificationResultType.UNKOWN);
                 System.err.println("Timeout!");
+                System.exit(1);
             }
             executor.shutdownNow();
         }
@@ -135,7 +137,7 @@ public class SRTool {
 		
     }
         
-    static private VerificationResult executeSimpleSummarisation(Program program, VerifierVisitor verifierVisitor) throws IOException, InterruptedException {
+    static private VerificationResult executeSimpleSummarisation(Program program, VerifierVisitor verifierVisitor) throws IOException, InterruptedException, ProcessTimeoutException {
         VerificationResult verificationResult;
         ProcessExec process = new ProcessExec(Z3_PATH, "-smt2", "-in");
         for(Procedure procedure : program.procedures.values()) {
@@ -147,8 +149,7 @@ public class SRTool {
             try {
 		queryResult = process.execute(vc, TIMEOUT);
             } catch (ProcessTimeoutException e)  {
-            	System.out.println(VerificationResultType.UNKOWN);
-            	System.exit(1);
+                throw e;
             }
             
             if(verificationResult == null) {
@@ -176,7 +177,7 @@ public class SRTool {
      *      - correct, having removed all failing candidates, leaving only the regular ones
      *      - incorrect (possible false positive, due to sound algorithm), having removed several candidates 
      */
-    static private VerificationResult executeHoudiniAlgorithm(Program program, VerifierVisitor verifierVisitor) throws IOException, InterruptedException {
+    static private VerificationResult executeHoudiniAlgorithm(Program program, VerifierVisitor verifierVisitor) throws IOException, InterruptedException, ProcessTimeoutException {
         boolean anyProcCandidateFailed, thisProcCandidateFailed, regularFailed;
         VerificationResult verificationResult;
         ProcessExec process = new ProcessExec(Z3_PATH, "-smt2", "-in");
@@ -196,8 +197,7 @@ public class SRTool {
                     try {
 			queryResult = process.execute(vc, TIMEOUT);
                     } catch (ProcessTimeoutException e) {
-			System.out.println(VerificationResultType.UNKOWN);
-			System.exit(1);
+                        throw e;
                     }
                     
                     if(verificationResult == null) {
@@ -231,7 +231,7 @@ public class SRTool {
         return verificationResult;
     }
     
-    static private VerificationResult executeBoundedModelChecking(Program program, VerifierVisitor verifierVisitor, int width) throws IOException, InterruptedException {
+    static private VerificationResult executeBoundedModelChecking(Program program, VerifierVisitor verifierVisitor, int width) throws IOException, InterruptedException, ProcessTimeoutException {
         VerificationResult verificationResult;
         
         ProcessExec process = new ProcessExec(Z3_PATH, "-smt2", "-in");
@@ -246,8 +246,7 @@ public class SRTool {
             try {
 		queryResult = process.execute(vc, TIMEOUT);
             } catch (ProcessTimeoutException e) {
-		System.out.println(VerificationResultType.UNKOWN);
-		System.exit(1);
+                throw e;
             }
                     
             if(verificationResult == null) {
@@ -281,7 +280,7 @@ public class SRTool {
         return verificationResult;
     }
     
-    static private VerificationResult incrementalSoundBoundModelChecking(Program program, VerifierVisitor verifierVisitor, int startingWidth, int maxWidth) throws IOException, InterruptedException {
+    static private VerificationResult incrementalSoundBoundModelChecking(Program program, VerifierVisitor verifierVisitor, int startingWidth, int maxWidth) throws IOException, InterruptedException, ProcessTimeoutException {
         VerificationResult verificationResult = null;
         int width = startingWidth;
         while(width <= maxWidth) {
