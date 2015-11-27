@@ -37,10 +37,10 @@ import util.statement.AssertStatement;
 
 public class SRTool {
 
-    private static final int TIMEOUT = 175;
+    private static final int TIMEOUT = 170;
     private static final boolean DEBUG_MODE = false;
     private static final String Z3_PATH = "./z3";
-    private static final int TOTAL_TIMEOUT = 175;
+    private static final int TOTAL_TIMEOUT = 170;
     
         public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
             ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -56,10 +56,18 @@ public class SRTool {
             catch (TimeoutException e) {
                 System.out.println(VerificationResultType.UNKNOWN);
                 System.err.println("Timeout!");
+                executor.shutdownNow();
                 System.exit(1);
             }
             catch(Exception e) {
                 System.out.println(VerificationResultType.UNKNOWN);
+                executor.shutdownNow();
+                System.exit(1);
+            }
+            catch(Error e) {
+                System.out.println(VerificationResultType.UNKNOWN);
+                System.err.println("Error !");
+                executor.shutdownNow();
                 System.exit(1);
             }
             executor.shutdownNow();
@@ -134,9 +142,10 @@ public class SRTool {
                         
                     }
                 }
-            } catch(ProcessTimeoutException e) {
+            } 
+            catch(ProcessTimeoutException e) {
                 throw e;
-            }  
+            }
 		
     }
         
