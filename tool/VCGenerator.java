@@ -38,7 +38,7 @@ public class VCGenerator {
 		try {
                     result.append(ssa.translateToSmtFormula(fresh, true));
 		}  catch (OutOfMemoryError E) {
-                    System.out.println(VerificationResultType.UNKOWN);
+                    System.out.println(VerificationResultType.UNKNOWN);
                     System.err.println("Out of Memory!");
                     System.exit(1);
             	}

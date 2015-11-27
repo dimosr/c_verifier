@@ -12,7 +12,7 @@ public class VerificationResult {
     public enum VerificationResultType {
         CORRECT("CORRECT"), 
         INCORRECT("INCORRECT"), 
-        UNKOWN("UNKNOWN");
+        UNKNOWN("UNKNOWN");
         
         private String value;
         VerificationResultType(String value) {
@@ -39,7 +39,7 @@ public class VerificationResult {
     }
     
     public boolean isUknown() {
-        return resultType == VerificationResultType.UNKOWN;
+        return resultType == VerificationResultType.UNKNOWN;
     }
     
     public void addFailingAssertionIndex(int index) {

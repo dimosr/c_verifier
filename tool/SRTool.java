@@ -54,14 +54,18 @@ public class SRTool {
                 future.get(TOTAL_TIMEOUT, TimeUnit.SECONDS);
             } 
             catch (TimeoutException e) {
-                System.out.println(VerificationResultType.UNKOWN);
+                System.out.println(VerificationResultType.UNKNOWN);
                 System.err.println("Timeout!");
+                System.exit(1);
+            }
+            catch(Exception e) {
+                System.out.println(VerificationResultType.UNKNOWN);
                 System.exit(1);
             }
             executor.shutdownNow();
         }
 
-	public static void execute(String[] args) throws IOException, InterruptedException {
+	public static void execute(String[] args) throws IOException, InterruptedException, ProcessTimeoutException {
             
             try{
                 String filename = args[0];
@@ -124,15 +128,14 @@ public class SRTool {
                             System.exit(0);
                         }
                         else if(verificationResult.isUknown()){
-                            System.out.println(VerificationResultType.UNKOWN);      //static verification has false positives
+                            System.out.println(VerificationResultType.UNKNOWN);      //static verification has false positives
                             System.exit(1);
                         }
                         
                     }
                 }
-            } catch(Exception e) {
-                System.out.println(VerificationResultType.UNKOWN);
-                System.exit(1);
+            } catch(ProcessTimeoutException e) {
+                throw e;
             }  
 		
     }
@@ -160,7 +163,7 @@ public class SRTool {
                 return verificationResult;
             }
             else if(verificationResult.isUknown()) {
-                System.out.println(VerificationResultType.UNKOWN);
+                System.out.println(VerificationResultType.UNKNOWN);
                 System.err.println(queryResult);
                 System.exit(1);
             }
@@ -214,7 +217,7 @@ public class SRTool {
                             regularFailed = true;
                     }
                     else if(verificationResult.isUknown()) {
-                        System.out.println(VerificationResultType.UNKOWN);
+                        System.out.println(VerificationResultType.UNKNOWN);
                         System.err.println(queryResult);
                         System.exit(1);
                     }
@@ -261,7 +264,7 @@ public class SRTool {
                     if(assertionMapping.sourceType == SourceType.ASSERT){
                         AssertStatement assertStmt = (AssertStatement) assertionMapping.source;
                         if(assertStmt.toString().equals(VerifierVisitor.BMC_SOUND_ASSERT.toString())) {
-                            verificationResult = new VerificationResult(VerificationResultType.UNKOWN);
+                            verificationResult = new VerificationResult(VerificationResultType.UNKNOWN);
                             return verificationResult;
                         }
                     }
@@ -270,7 +273,7 @@ public class SRTool {
                 return verificationResult;
             }
             else if(verificationResult.isUknown()) {
-                System.out.println(VerificationResultType.UNKOWN);
+                System.out.println(VerificationResultType.UNKNOWN);
                 System.err.println(queryResult);
                 System.exit(1);
             }
@@ -303,7 +306,7 @@ public class SRTool {
         else if(smtResult.equals("unsat"))
             verificationResult = new VerificationResult(VerificationResultType.CORRECT);
         else
-            verificationResult = new VerificationResult(VerificationResultType.UNKOWN);
+            verificationResult = new VerificationResult(VerificationResultType.UNKNOWN);
         
         if(verificationResult.isIncorrect()) {
             while(scanner.hasNextLine()) {
