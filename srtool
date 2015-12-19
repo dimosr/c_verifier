@@ -1,3 +1,5 @@
 #!/bin/bash
 
-java -cp .:antlr-4.5.1-complete.jar tool.SRTool $@
+DIR=$1
+
+java -cp ${DIR}:${DIR}/antlr-4.5.1-complete.jar tool.SRTool $2

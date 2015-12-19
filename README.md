@@ -58,7 +58,7 @@ make
 
 - To execute the program with a test file
 ```sh
-./srtool tests/part1/correct/divzero.c
+./srtool . tests/part1/correct/divzero.c
 ```
 
 - To just auto-generate from ANTLR the Visitor for grammar in [SimpleC.g](https://github.com/dimosr7/c_verifier/blob/master/parser/SimpleC.g):
@@ -74,6 +74,10 @@ java -cp ../antlr-4.5.1-complete.jar org.antlr.v4.Tool -visitor -package parser 
 - Make sure that the working directory is the root folder of the project (so that .z3 executable is found)
 
 ### Automatic testing
+
+To execute tests with Lit, you will have to :
+- change the static field of SRTool, Z3_PATH to "z3"
+- add z3 in your PATH
 
 - Install lit, using python pip
 ```sh
