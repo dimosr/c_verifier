@@ -75,9 +75,9 @@ java -cp ../antlr-4.5.1-complete.jar org.antlr.v4.Tool -visitor -package parser 
 
 ### Automatic testing
 
-To execute tests with Lit, you will have to :
-- change the static field of SRTool, Z3_PATH to "z3"
-- add z3 in your PATH
+To execute tests with Lit, you will initially have to :
+1. change the static field of SRTool, Z3_PATH to "z3"
+2. add z3 in your PATH
 
 - Install lit, using python pip
 ```sh
