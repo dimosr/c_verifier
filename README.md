@@ -88,7 +88,7 @@ The only slight differences from C are the following :
 - Reading from an unitialised variable gives an arbitrary value (contrary to undefined behaviour of C standards)
 - Global variables are initially uninitialised (while in C they are initialised to 0)
 - Shifting a 32-bit value by more than 32 bits yields the result 0 (contrary to undefined behaviour of C standards)
-- x/0 and x%0 is defined to be 0 (contrary to undefined behaviour of C standards) 
+- x/0 and x%0 is defined to be x (contrary to undefined behaviour of C standards) 
 
 ### Compilation on terminal
 
